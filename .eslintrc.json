@@ -1,0 +1,9 @@
+{
+  "extends": "@dcl/eslint-config/sdk",
+  "parserOptions": {
+    "project": [
+      "test/tsconfig.json",
+      "tsconfig.json"
+    ]
+  }
+}

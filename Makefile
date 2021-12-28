@@ -9,6 +9,12 @@ test:
 test-watch:
 	node_modules/.bin/jest --detectOpenHandles --colors --runInBand --watch $(TESTARGS)
 
+lint:
+	node_modules/.bin/eslint . --ext .ts
+
+lint-fix:
+	node_modules/.bin/eslint . --ext .ts --fix
+
 build:
 	./node_modules/.bin/tsc -p tsconfig.json
 	rm -rf node_modules/@microsoft/api-extractor/node_modules/typescript || true
