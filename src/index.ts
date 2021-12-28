@@ -2,6 +2,7 @@ import { Message, Payload, SendUpdates, State } from './types'
 export * from './types'
 
 /**
+ * @public
  * CRDT protocol.
  * Stores the latest state, and decides whenever we have
  * to process and store the new data in case its an update, or

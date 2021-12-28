@@ -1,4 +1,5 @@
 /**
+ * @public
  * Struct of the message that's being transfered between clients.
  */
 export type Message<T = unknown> = {
@@ -8,6 +9,7 @@ export type Message<T = unknown> = {
 }
 
 /**
+ * @public
  * Payload that its being stored in the state.
  */
 export type Payload<T = unknown> = {
@@ -16,11 +18,13 @@ export type Payload<T = unknown> = {
 }
 
 /**
+ * @public
  * Local state
  */
 export type State<T = unknown> = Record<string, Payload<T> | undefined>
 
 /**
+ * @public
  * Function to send updates to the other clients.
  */
 export type SendUpdates<T = unknown> = (message: Message<T>) => Promise<void>

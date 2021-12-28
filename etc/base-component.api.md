@@ -5,8 +5,32 @@
 ```ts
 
 // @public
-export function example(): boolean;
+export function crdtProtocol<T>(sendUpdates: SendUpdates<T>): {
+    createEvent: (key: string, data: T) => Message<T>;
+    sendMessage: (key: string, data: T) => Promise<void>;
+    processMessage: (message: Message<T>) => Promise<void> | Payload<T> | undefined;
+    getState: () => State<T>;
+    clearState: () => State<T>;
+};
 
+// @public
+export type Message<T = unknown> = {
+    key: string;
+    timestamp: number;
+    data: T;
+};
+
+// @public
+export type Payload<T = unknown> = {
+    timestamp: number;
+    data: T;
+};
+
+// @public
+export type SendUpdates<T = unknown> = (message: Message<T>) => Promise<void>;
+
+// @public
+export type State<T = unknown> = Record<string, Payload<T> | undefined>;
 
 // (No @packageDocumentation comment for this package)
 
