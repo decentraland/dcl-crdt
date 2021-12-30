@@ -15,11 +15,16 @@ function compareStatePayloads(states: State<Buffer>[]) {
   if (!states.length) {
     return true
   }
-  const keys = Object.keys(states[0])
+  const baseState = states[0]
+  const keys = Object.keys(baseState)
   return states.every(
     (s) =>
-      s.length === states[0].length &&
-      keys.every((key) => compareData(s[key].data, states[0][key].data))
+      s.length === baseState.length &&
+      keys.every(
+        (key) =>
+          compareData(s[key].data, baseState[key].data) &&
+          s[key].timestamp === baseState[key].timestamp
+      )
   )
 }
 
