@@ -116,8 +116,8 @@ describe('CRDT protocol', () => {
     await clientA.sendMessage(messageA)
     await clientB.sendMessage(messageB)
 
-    const messageB2 = clientB.createEvent(keyB, Buffer.from('sand'))
-    const messageA2 = clientA.createEvent(keyB, Buffer.from('holaholaholahola'))
+    const messageB2 = clientB.createEvent(keyB, Buffer.from('a'))
+    const messageA2 = clientA.createEvent(keyB, Buffer.from('z'))
     await Promise.all([
       clientB.sendMessage(messageB2),
       clientA.sendMessage(messageA2)
@@ -136,8 +136,8 @@ describe('CRDT protocol', () => {
     await clientA.sendMessage(messageA)
     await clientB.sendMessage(messageB)
 
-    const messageB2 = clientB.createEvent(keyB, Buffer.from('sand'))
-    const messageA2 = clientA.createEvent(keyB, Buffer.from('holaholaholahola'))
+    const messageB2 = clientB.createEvent(keyB, Buffer.from('z'))
+    const messageA2 = clientA.createEvent(keyB, Buffer.from('a'))
     await Promise.all([
       clientA.sendMessage(messageA2),
       clientB.sendMessage(messageB2)
@@ -156,11 +156,11 @@ describe('CRDT protocol', () => {
     await clientA.sendMessage(messageA)
     await clientB.sendMessage(messageB)
 
-    const messageB2 = clientB.createEvent(keyB, Buffer.from('sand'))
-    const messageC = clientC.createEvent(keyB, Buffer.from('hola'))
+    const messageB2 = clientB.createEvent(keyB, Buffer.from('a'))
+    const messageC = clientC.createEvent(keyB, Buffer.from('z'))
     await Promise.all([
-      clientB.sendMessage(messageB2),
-      clientC.sendMessage(messageC)
+      clientC.sendMessage(messageC),
+      clientB.sendMessage(messageB2)
     ])
     compare()
   })
