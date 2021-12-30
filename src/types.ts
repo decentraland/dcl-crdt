@@ -1,6 +1,6 @@
 /**
- * @public
  * Struct of the message that's being transfered between clients.
+ * @public
  */
 export type Message<T = unknown> = {
   key: string
@@ -9,8 +9,8 @@ export type Message<T = unknown> = {
 }
 
 /**
- * @public
  * Payload that its being stored in the state.
+ * @public
  */
 export type Payload<T = unknown> = {
   timestamp: number
@@ -18,13 +18,13 @@ export type Payload<T = unknown> = {
 }
 
 /**
- * @public
  * Local state
+ * @public
  */
 export type State<T = unknown> = Record<string, Payload<T> | undefined>
 
 /**
- * @public
  * Function to send updates to the other clients.
+ * @public
  */
 export type SendUpdates<T = unknown> = (message: Message<T>) => Promise<void>

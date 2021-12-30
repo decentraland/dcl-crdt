@@ -8,7 +8,7 @@
 export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string): {
     createEvent: (key: string, data: T) => Message<T>;
     sendMessage: (message: Message<T>) => Promise<void>;
-    processMessage: (message: Message<T>) => Promise<void> | Payload<T> | undefined;
+    processMessage: (message: Message<T>) => Promise<void> | Payload<T>;
     getState: () => State<T>;
     getUUID: () => string;
     clearState: () => State<T>;

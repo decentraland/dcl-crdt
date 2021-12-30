@@ -3,6 +3,7 @@ export * from './types'
 
 /**
  * Compare raw data.
+ * @internal
  */
 function sameData<T = unknown>(a: T, b: T) {
   if (a instanceof Buffer && b instanceof Buffer) {
@@ -21,11 +22,13 @@ function sameData<T = unknown>(a: T, b: T) {
 export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
   /**
    * UUID identifier
+   * @internal
    */
   const uuid = id
 
   /**
    * Logger
+   * @internal
    */
   function log(...args: any) {
     return
@@ -35,11 +38,13 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
   /**
    * Local state where we store the latest lamport timestamp
    * and the raw data value
+   * @internal
    */
   let state: State<T> = {}
 
   /**
    * We should call this fn in order to update the state
+   * @internal
    */
   function updateState(
     key: string,
@@ -54,6 +59,7 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
   /**
    * Create an event for the specified key and store the new data and
    * lamport timestmap incremented by one in the state.
+   * @public
    */
   function createEvent(key: string, data: T): Message<T> {
     // Increment the timestamp
@@ -65,6 +71,7 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
 
   /**
    * Send generated message
+   * @public
    */
   function sendMessage(message: Message<T>) {
     return sendUpdates(message)
@@ -74,6 +81,7 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
    * Process the received message only if the lamport number is higher than
    * the current one. If not, seems we have a race condition.
    * The bigger raw data wins and spreads it to the network
+   * @public
    */
   function processMessage(message: Message<T>) {
     const { key, data, timestamp } = message
@@ -116,6 +124,7 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
 
   /**
    * Returns the current state
+   * @public
    */
   function getState(): State<T> {
     return { ...state } as State<T>
@@ -123,13 +132,15 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
 
   /**
    * Returns the current state
+   * @public
    */
   function clearState(): State<T> {
     return (state = {}) as State<T>
   }
 
   /**
-   * Returns the uuid
+   * Returns the client uuid
+   * @public
    */
   function getUUID(): string {
     return uuid
