@@ -28,7 +28,6 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
    * Logger
    */
   function log(...args: any) {
-    return
     console.log(`${uuid}: ${JSON.stringify(args, null)}`)
   }
 
@@ -60,8 +59,14 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
    * lamport timestmap incremented by one in the state.
    */
   function createEvent(key: string, data: T): Message<T> {
-    const message = tickEvent(key, data)
-    return { key, data: message.data, timestamp: message.timestamp }
+    const event = tickEvent(key, data)
+    const message: Message<T> = {
+      key,
+      data: event.data,
+      timestamp: event.timestamp
+    }
+    log('createEvent: ', message)
+    return message
   }
 
   /**
@@ -69,7 +74,9 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
    */
   function sendMessage(message: Message<T>) {
     const { timestamp } = tickEvent(message.key, message.data)
-    return sendUpdates({ ...message, timestamp })
+    const newMessage = { ...message, timestamp }
+    log('sendMessage: ', newMessage)
+    return sendUpdates(newMessage)
   }
 
   /**
@@ -80,33 +87,26 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
   function processMessage(message: Message<T>) {
     const { key, data, timestamp } = message
     const current = state[key]
-    log(current, message)
+    log({ current, message })
+
     // Somehow the message that we sent came back as an echo.
     if (sameData(current?.data, data)) {
-      log('same data')
-      return
+      return tickEvent(key, data, timestamp)
     }
 
     // If the received timestamp is > than our current value,
     // store the new payload and increment our lamport timestamp by one
     if (!current || current.timestamp < timestamp) {
-      log('tick event', data, timestamp)
       return tickEvent(key, data, timestamp)
     }
 
     // If our current timestamp is higher, then send the message
     // to the network with our payload without incrementing the counter.
     if (current.timestamp > timestamp) {
-      log('send updates')
-      // return sendMessage({
-      //   key,
-      //   data: current.data,
-      //   timestamp: current.timestamp
-      // })
-      return sendUpdates({
+      return sendMessage({
         key,
-        timestamp: current.timestamp,
-        data: current.data
+        data: current.data,
+        timestamp: current.timestamp
       })
     }
 
@@ -116,11 +116,6 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
     function compareData(current: unknown, data: unknown) {
       return (current as number) > (data as number)
     }
-    log(
-      'compare data',
-      compareData(current.data, data) ? current : data,
-      timestamp
-    )
     return compareData(current.data, data)
       ? sendMessage({ key, data: current.data, timestamp: current.timestamp })
       : tickEvent(key, data, timestamp)

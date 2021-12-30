@@ -81,9 +81,11 @@ describe('CRDT protocol', () => {
   it('should store the message A in all the clients', async () => {
     const { clients, compare } = createSandbox({ clientLength: 2 })
     const [clientA] = clients
-    const messageA = clientA.createEvent('key-A', Buffer.from('casla'))
+    const key = 'key-A'
+    const messageA = clientA.createEvent(key, Buffer.from('casla'))
     await clientA.sendMessage(messageA)
     compare()
+    expect(clientA.getState()[key].data).toBe(messageA.data)
   })
 
   it('same as before but with more clients (N > 2)', async () => {
@@ -99,13 +101,12 @@ describe('CRDT protocol', () => {
     const [clientA, clientB] = clients
     const key = 'key-A'
 
-    const messageA = clientA.createEvent(key, Buffer.from('boedo'))
-    const messageB = clientB.createEvent(key, Buffer.from('casla'))
-    await Promise.all([
-      clientA.sendMessage(messageA),
-      clientB.sendMessage(messageB)
-    ])
-
+    // Buffer('a') > Buffer('z')
+    const messageA = clientA.createEvent(key, Buffer.from('a'))
+    const messageB = clientB.createEvent(key, Buffer.from('z'))
+    const promiseA = clientA.sendMessage(messageA)
+    const promiseB = clientB.sendMessage(messageB)
+    await Promise.all([promiseA, promiseB])
     compare()
     expect(compareData(clientA.getState()[key].data, messageB.data)).toBe(true)
   })
@@ -116,10 +117,9 @@ describe('CRDT protocol', () => {
     const key = 'key-A'
     const messageA = clientA.createEvent(key, Buffer.from('boedo'))
     const messageB = clientB.createEvent(key, Buffer.from('casla'))
-    await Promise.all([
-      clientA.sendMessage(messageA),
-      clientB.sendMessage(messageB)
-    ])
+    const promiseA = clientA.sendMessage(messageA)
+    const promiseB = clientB.sendMessage(messageB)
+    await Promise.all([promiseA, promiseB])
     compare()
     expect(compareData(clientA.getState()[key].data, messageB.data)).toBe(true)
   })
@@ -132,19 +132,21 @@ describe('CRDT protocol', () => {
 
     const messageA = clientA.createEvent(keyA, Buffer.from('boedo'))
     const messageB = clientB.createEvent(keyB, Buffer.from('casla'))
-    await clientA.sendMessage(messageA)
-    await clientB.sendMessage(messageB)
+
+    const p1 = clientA.sendMessage(messageA)
+    const p2 = clientB.sendMessage(messageB)
+    await Promise.all([p1, p2])
 
     const messageB2 = clientB.createEvent(keyB, Buffer.from('a'))
     const messageA2 = clientA.createEvent(keyB, Buffer.from('z'))
-    await Promise.all([
-      clientB.sendMessage(messageB2),
-      clientA.sendMessage(messageA2)
-    ])
+    const p3 = clientB.sendMessage(messageB2)
+    const p4 = clientA.sendMessage(messageA2)
+    await Promise.all([p3, p4])
     compare()
+    expect(clientA.getState()[keyB].data).toBe(messageA2.data)
   })
 
-  it('should store both keys, even if we send the messages in diff order (sand before holahola)', async () => {
+  it('should store both keys, even if we send the messages in diff order z > a', async () => {
     const { clients, compare } = createSandbox({ clientLength: 2 })
     const [clientA, clientB] = clients
     const keyA = 'key-A'
@@ -152,16 +154,19 @@ describe('CRDT protocol', () => {
 
     const messageA = clientA.createEvent(keyA, Buffer.from('boedo'))
     const messageB = clientB.createEvent(keyB, Buffer.from('casla'))
-    await clientA.sendMessage(messageA)
-    await clientB.sendMessage(messageB)
+    await Promise.all([
+      clientA.sendMessage(messageA),
+      clientB.sendMessage(messageB)
+    ])
 
     const messageB2 = clientB.createEvent(keyB, Buffer.from('z'))
     const messageA2 = clientA.createEvent(keyB, Buffer.from('a'))
-    await Promise.all([
-      clientA.sendMessage(messageA2),
-      clientB.sendMessage(messageB2)
-    ])
+    const p1 = clientA.sendMessage(messageA2)
+    const p2 = clientB.sendMessage(messageB2)
+    await Promise.all([p1, p2])
+
     compare()
+    expect(clientA.getState()[keyB].data).toBe(messageB2.data)
   })
 
   it('same as before but with more clients (N > 2)', async () => {
@@ -172,15 +177,15 @@ describe('CRDT protocol', () => {
 
     const messageA = clientA.createEvent(keyA, Buffer.from('boedo'))
     const messageB = clientB.createEvent(keyB, Buffer.from('casla'))
-    await clientA.sendMessage(messageA)
-    await clientB.sendMessage(messageB)
+    const promises = []
+    promises.push(clientA.sendMessage(messageA))
+    promises.push(clientB.sendMessage(messageB))
 
     const messageB2 = clientB.createEvent(keyB, Buffer.from('a'))
     const messageC = clientC.createEvent(keyB, Buffer.from('z'))
-    await Promise.all([
-      clientC.sendMessage(messageC),
-      clientB.sendMessage(messageB2)
-    ])
+    promises.push(clientC.sendMessage(messageC))
+    promises.push(clientB.sendMessage(messageB2))
+    await Promise.all(promises)
     compare()
   })
 })
