@@ -130,6 +130,6 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
     sendMessage,
     processMessage,
     getState,
-    getUUID,
+    getUUID
   }
 }
