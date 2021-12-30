@@ -1,16 +1,22 @@
 import { crdtProtocol, Message, State } from '../src'
 import expect from 'expect'
 
+/**
+ * Compare buffer data
+ */
 function compareData(a: Buffer, b: Buffer) {
   return a.equals(b)
 }
 
+/**
+ * Compare state between clients
+ */
 function compareStatePayloads(states: State<Buffer>[]) {
   if (!states.length) {
     return true
   }
   const keys = Object.keys(states[0])
-  console.log(states)
+  // console.log(states)
   return states.every(
     (s) =>
       s.length === states[0].length &&
@@ -18,34 +24,49 @@ function compareStatePayloads(states: State<Buffer>[]) {
   )
 }
 
+/**
+ * Sandbox type opts
+ */
 type Sandbox = {
   clientLength: number
 }
 
+/**
+ * Generate clients, transport and compare fns so its easier to write tests.
+ */
 function createSandbox(opts: Sandbox) {
+  // Fake uuiid generator
   let id = 0
   const getId = () => {
     id = id + 1
     return id.toString()
   }
-  const broadcast = (uuid: string) => ({
-    send: async (message: Message<Buffer>) => {
-      await Promise.all(
-        clients.map((c) => c.getUUID() !== uuid && c.processMessage(message))
-      )
-    }
-  })
 
-  const clients = Array.from({
-    length: opts.clientLength
-  }).map(() => {
+  /**
+   * Transport method to broadcast the messages.
+   */
+  function broadcast(uuid: string) {
+    return {
+      send: async (message: Message<Buffer>) => {
+        await Promise.all(
+          clients.map((c) => c.getUUID() !== uuid && c.processMessage(message))
+        )
+      }
+    }
+  }
+
+  /**
+   * Generate all the clients
+   */
+  const clients = Array.from({ length: opts.clientLength }).map(() => {
     const uuid = getId()
     const ws = broadcast(uuid)
-    return crdtProtocol<Buffer>(async (message: Message<Buffer>) => {
-      await ws.send(message)
-    }, uuid)
+    return crdtProtocol<Buffer>(ws.send, uuid)
   })
 
+  /**
+   *  Expose fn to compare every client state with each other.
+   */
   function compare() {
     expect(compareStatePayloads(clients.map((c) => c.getState()))).toBe(true)
   }
@@ -55,8 +76,6 @@ function createSandbox(opts: Sandbox) {
     clients
   }
 }
-
-beforeEach(() => {})
 
 describe('CRDT protocol', () => {
   it('should store the message A in all the clients', async () => {
