@@ -16,7 +16,6 @@ function compareStatePayloads(states: State<Buffer>[]) {
     return true
   }
   const keys = Object.keys(states[0])
-  // console.log(states)
   return states.every(
     (s) =>
       s.length === states[0].length &&
@@ -168,43 +167,36 @@ describe('CRDT protocol', () => {
       clientB.sendMessage(messageB)
     ]
     await Promise.all(promises)
-    // clientA: 'keyA:2' & 'keyB:3'
-    // clientB: 'keyA:3' & 'keyB: 2'
     const messageB2 = clientB.createEvent(keyB, Buffer.from('z'))
-    // clientB: 'keyA:3' & 'keyB: 3'
     const messageA2 = clientA.createEvent(keyB, Buffer.from('a'))
-    // clientA: 'keyA:3' & 'keyB: 4'
     const p1 = clientA.sendMessage(messageA2)
-    // clientA: 'keyA:3' & 'keyB: 5'
     const p2 = clientB.sendMessage(messageB2)
-    // clientB: 'keyA:3' & 'keyB: 4'
+
     await Promise.all([p1, p2])
-    // ClientB started sending keyB message. So his timestamp is going to be
-    // lower than clientA, cause every time we process a message we increment
-    // the lamport timestamp by one.
-    // So if then both clients send the same key at the same time, clientA wins.
     compare()
-    expect(clientA.getState()[keyB].data).toBe(messageA2.data)
+    expect(clientA.getState()[keyB].data).toBe(messageB2.data)
   })
 
   it('same as before but with more clients (N > 2)', async () => {
-    const { clients, compare } = createSandbox({ clientLength: 20 })
-    const [clientA, clientB, clientC] = clients
+    const { clients, compare } = createSandbox({ clientLength: 3 })
+    const [clientA, clientB] = clients
     const keyA = 'key-A'
     const keyB = 'key-B'
 
     const messageA = clientA.createEvent(keyA, Buffer.from('boedo'))
     const messageB = clientB.createEvent(keyB, Buffer.from('casla'))
-    const promises: Promise<unknown>[] = []
-    promises.push(clientA.sendMessage(messageA))
-    promises.push(clientB.sendMessage(messageB))
-
-    const messageB2 = clientB.createEvent(keyB, Buffer.from('a'))
-    const messageC = clientC.createEvent(keyB, Buffer.from('z'))
-    promises.push(clientC.sendMessage(messageC))
-    promises.push(clientB.sendMessage(messageB2))
+    const promises = [
+      clientA.sendMessage(messageA),
+      clientB.sendMessage(messageB)
+    ]
     await Promise.all(promises)
+    const messageB2 = clientB.createEvent(keyB, Buffer.from('z'))
+    const messageA2 = clientA.createEvent(keyB, Buffer.from('a'))
+    const p1 = clientA.sendMessage(messageA2)
+    const p2 = clientB.sendMessage(messageB2)
+    await Promise.all([p1, p2])
     compare()
+    expect(clientA.getState()[keyB].data).toBe(messageB2.data)
   })
 
   it('A, B and C send at the same time for the same key. Bigger raw should win', async () => {
