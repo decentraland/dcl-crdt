@@ -11,7 +11,6 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string): {
     processMessage: (message: Message<T>) => Promise<void> | Payload<T>;
     getState: () => State<T>;
     getUUID: () => string;
-    clearState: () => State<T>;
 };
 
 // @public
