@@ -1,14 +1,16 @@
-CRDT Protocol
+## CRDT Protocol
 
+Example
 ```ts
 type Transport {
-  send(message: Message): Promise<void>
-  on(event: 'message' | 'error'): Promise<void>
+  send(message: Message): Promise<void>,
+  on(evt: 'message' | 'error'): Promise<void>
 }
 
 const clientA = crdtProtocol<Buffer>(async (message: Message<Buffer>) => {
   await transportA.send(message)
 }, uuid())
+
 const clientB = crdtProtocol<Buffer>(async (message: Message<Buffer>) => {
   await transportB.send(message)
 }, uuid())
