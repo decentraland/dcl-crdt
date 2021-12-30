@@ -27,20 +27,11 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
   const uuid = id
 
   /**
-   * Logger
-   * @internal
-   */
-  function log(...args: any) {
-    return
-    console.log(`${uuid}: ${JSON.stringify(args, null)}`)
-  }
-
-  /**
    * Local state where we store the latest lamport timestamp
    * and the raw data value
    * @internal
    */
-  let state: State<T> = {}
+  const state: State<T> = {}
 
   /**
    * We should call this fn in order to update the state
@@ -86,7 +77,6 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
   function processMessage(message: Message<T>) {
     const { key, data, timestamp } = message
     const current = state[key]
-    log({ current, message })
 
     // Somehow the message that we sent came back as an echo.
     if (sameData(current?.data, data)) {
@@ -95,14 +85,12 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
 
     // If the received timestamp is > than our current value, store it
     if (!current || current.timestamp < timestamp) {
-      log('updateState')
       return updateState(key, data, timestamp)
     }
 
     // If our current timestamp is higher, then send the message
     // to the network with our state
     if (current.timestamp > timestamp) {
-      log('sendMessage')
       return sendMessage({
         key,
         data: current.data,
@@ -116,7 +104,6 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
     function compareData(current: unknown, data: unknown) {
       return (current as number) > (data as number)
     }
-    log('compareData')
     return compareData(current.data, data)
       ? sendMessage({ key, data: current.data, timestamp: current.timestamp })
       : updateState(key, data, timestamp)
@@ -128,14 +115,6 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
    */
   function getState(): State<T> {
     return { ...state } as State<T>
-  }
-
-  /**
-   * Returns the current state
-   * @public
-   */
-  function clearState(): State<T> {
-    return (state = {}) as State<T>
   }
 
   /**
@@ -152,6 +131,5 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
     processMessage,
     getState,
     getUUID,
-    clearState
   }
 }
