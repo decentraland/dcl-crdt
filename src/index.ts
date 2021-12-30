@@ -28,6 +28,7 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
    * Logger
    */
   function log(...args: any) {
+    return
     console.log(`${uuid}: ${JSON.stringify(args, null)}`)
   }
 
@@ -82,7 +83,7 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
   /**
    * Process the received message only if the lamport number is higher than
    * the current one. If not, seems we have a race condition.
-   * The bigger raw data wins, and spreads it to the network
+   * The bigger raw data wins and spreads it to the network
    */
   function processMessage(message: Message<T>) {
     const { key, data, timestamp } = message
@@ -91,19 +92,21 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
 
     // Somehow the message that we sent came back as an echo.
     if (sameData(current?.data, data)) {
-      return tickEvent(key, data, timestamp)
+      return // tickEvent(key, data, timestamp)
     }
 
     // If the received timestamp is > than our current value,
     // store the new payload and increment our lamport timestamp by one
     if (!current || current.timestamp < timestamp) {
+      log('tickEvent')
       return tickEvent(key, data, timestamp)
     }
 
     // If our current timestamp is higher, then send the message
     // to the network with our payload without incrementing the counter.
     if (current.timestamp > timestamp) {
-      return sendMessage({
+      log('sendMessage')
+      return sendUpdates({
         key,
         data: current.data,
         timestamp: current.timestamp
@@ -116,6 +119,7 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
     function compareData(current: unknown, data: unknown) {
       return (current as number) > (data as number)
     }
+    log('compareData')
     return compareData(current.data, data)
       ? sendMessage({ key, data: current.data, timestamp: current.timestamp })
       : tickEvent(key, data, timestamp)

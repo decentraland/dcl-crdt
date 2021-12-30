@@ -32,6 +32,13 @@ type Sandbox = {
 }
 
 /**
+ * Fake sleep ms network
+ */
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
  * Generate clients, transport and compare fns so its easier to write tests.
  */
 function createSandbox(opts: Sandbox) {
@@ -48,6 +55,8 @@ function createSandbox(opts: Sandbox) {
   function broadcast(uuid: string) {
     return {
       send: async (message: Message<Buffer>) => {
+        const randomTime = (Math.random() * 100 + 50) | 0
+        await sleep(randomTime)
         await Promise.all(
           clients.map((c) => c.getUUID() !== uuid && c.processMessage(message))
         )
@@ -88,7 +97,7 @@ describe('CRDT protocol', () => {
     expect(clientA.getState()[key].data).toBe(messageA.data)
   })
 
-  it('same as before but with more clients (N > 2)', async () => {
+  it('one message with more clients (N > 2)', async () => {
     const { clients, compare } = createSandbox({ clientLength: 20 })
     const [clientA] = clients
     const messageA = clientA.createEvent('key-A', Buffer.from('casla'))
@@ -111,12 +120,12 @@ describe('CRDT protocol', () => {
     expect(compareData(clientA.getState()[key].data, messageB.data)).toBe(true)
   })
 
-  it('same as before but with more clients (N > 2)', async () => {
-    const { clients, compare } = createSandbox({ clientLength: 20 })
+  it('B > A but with more clients (N > 2)', async () => {
+    const { clients, compare } = createSandbox({ clientLength: 4 })
     const [clientA, clientB] = clients
     const key = 'key-A'
-    const messageA = clientA.createEvent(key, Buffer.from('boedo'))
-    const messageB = clientB.createEvent(key, Buffer.from('casla'))
+    const messageA = clientA.createEvent(key, Buffer.from('a'))
+    const messageB = clientB.createEvent(key, Buffer.from('b'))
     const promiseA = clientA.sendMessage(messageA)
     const promiseB = clientB.sendMessage(messageB)
     await Promise.all([promiseA, promiseB])
@@ -154,19 +163,28 @@ describe('CRDT protocol', () => {
 
     const messageA = clientA.createEvent(keyA, Buffer.from('boedo'))
     const messageB = clientB.createEvent(keyB, Buffer.from('casla'))
-    await Promise.all([
+    const promises = [
       clientA.sendMessage(messageA),
       clientB.sendMessage(messageB)
-    ])
-
+    ]
+    await Promise.all(promises)
+    // clientA: 'keyA:2' & 'keyB:3'
+    // clientB: 'keyA:3' & 'keyB: 2'
     const messageB2 = clientB.createEvent(keyB, Buffer.from('z'))
+    // clientB: 'keyA:3' & 'keyB: 3'
     const messageA2 = clientA.createEvent(keyB, Buffer.from('a'))
+    // clientA: 'keyA:3' & 'keyB: 4'
     const p1 = clientA.sendMessage(messageA2)
+    // clientA: 'keyA:3' & 'keyB: 5'
     const p2 = clientB.sendMessage(messageB2)
+    // clientB: 'keyA:3' & 'keyB: 4'
     await Promise.all([p1, p2])
-
+    // ClientB started sending keyB message. So his timestamp is going to be
+    // lower than clientA, cause every time we process a message we increment
+    // the lamport timestamp by one.
+    // So if then both clients send the same key at the same time, clientA wins.
     compare()
-    expect(clientA.getState()[keyB].data).toBe(messageB2.data)
+    expect(clientA.getState()[keyB].data).toBe(messageA2.data)
   })
 
   it('same as before but with more clients (N > 2)', async () => {
@@ -177,7 +195,7 @@ describe('CRDT protocol', () => {
 
     const messageA = clientA.createEvent(keyA, Buffer.from('boedo'))
     const messageB = clientB.createEvent(keyB, Buffer.from('casla'))
-    const promises = []
+    const promises: Promise<unknown>[] = []
     promises.push(clientA.sendMessage(messageA))
     promises.push(clientB.sendMessage(messageB))
 
@@ -187,5 +205,24 @@ describe('CRDT protocol', () => {
     promises.push(clientB.sendMessage(messageB2))
     await Promise.all(promises)
     compare()
+  })
+
+  it('A, B and C send at the same time for the same key. Bigger raw should win', async () => {
+    const { clients, compare } = createSandbox({ clientLength: 3 })
+    const [clientA, clientB, clientC] = clients
+    const key = 'key-A'
+
+    // Buffer('a') > Buffer('z')
+    const messageA = clientA.createEvent(key, Buffer.from('A'))
+    const messageB = clientB.createEvent(key, Buffer.from('z'))
+    const messageC = clientC.createEvent(key, Buffer.from('C'))
+    const p1 = clientA.sendMessage(messageA)
+    const p2 = clientB.sendMessage(messageB)
+    const p3 = clientC.sendMessage(messageC)
+    await Promise.all([p1, p2, p3])
+    compare()
+    expect(compareData(clientA.getState()[key].data, Buffer.from('z'))).toBe(
+      true
+    )
   })
 })
