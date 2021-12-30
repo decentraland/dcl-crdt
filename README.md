@@ -3,7 +3,7 @@ CRDT Protocol
 ```ts
 type Transport {
   send(message: Message): Promise<void>
-  on:(event: 'message'): Promise<void>
+  on(event: 'message' | 'error'): Promise<void>
 }
 
 const clientA = crdtProtocol<Buffer>(async (message: Message<Buffer>) => {
