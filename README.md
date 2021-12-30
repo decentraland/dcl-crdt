@@ -1,12 +1,20 @@
 CRDT Protocol
 
 ```ts
-const client = crdtProtocol<Buffer>(async (message: Message<Buffer>) => {
-  await transport.send(message)
+type Transport {
+  send(message: Message): Promise<void>
+  on:(event: 'message'): Promise<void>
+}
+
+const clientA = crdtProtocol<Buffer>(async (message: Message<Buffer>) => {
+  await transportA.send(message)
 }, uuid())
 const clientB = crdtProtocol<Buffer>(async (message: Message<Buffer>) => {
-  await transport.send(message)
+  await transportB.send(message)
 }, uuid())
+
+transportA.on('message', clientA.processMessage)
+transportB.on('message', clientB.processMessage)
 
 const message = clientA.createEvent('keyA', Buffer.from('message'))
 await clientA.sendMessage(message)
