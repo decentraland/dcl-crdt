@@ -5,11 +5,12 @@
 ```ts
 
 // @public
-export function crdtProtocol<T>(sendUpdates: SendUpdates<T>): {
+export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string): {
     createEvent: (key: string, data: T) => Message<T>;
-    sendMessage: (key: string, data: T) => Promise<void>;
+    sendMessage: (message: Message<T>) => Promise<void>;
     processMessage: (message: Message<T>) => Promise<void> | Payload<T> | undefined;
     getState: () => State<T>;
+    getUUID: () => string;
     clearState: () => State<T>;
 };
 
