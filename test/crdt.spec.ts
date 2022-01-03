@@ -1,99 +1,11 @@
-import { crdtProtocol, Message, State } from '../src'
 import expect from 'expect'
 
-/**
- * Compare buffer data
- */
-function compareData(a: Buffer, b: Buffer) {
-  return a.equals(b)
-}
-
-/**
- * Compare state between clients
- */
-function compareStatePayloads(states: State<Buffer>[]) {
-  if (!states.length) {
-    return true
-  }
-  const baseState = states[0]
-  const keys = Object.keys(baseState)
-  return states.every(
-    (s) =>
-      s.length === baseState.length &&
-      keys.every(
-        (key) =>
-          compareData(s[key].data, baseState[key].data) &&
-          s[key].timestamp === baseState[key].timestamp
-      )
-  )
-}
-
-/**
- * Sandbox type opts
- */
-type Sandbox = {
-  clientLength: number
-  delay: boolean
-}
-
-/**
- * Fake sleep ms network
- */
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-/**
- * Generate clients, transport and compare fns so its easier to write tests.
- */
-function createSandbox(opts: Sandbox) {
-  // Fake uuiid generator
-  let id = 0
-  const getId = () => {
-    id = id + 1
-    return id.toString()
-  }
-
-  /**
-   * Transport method to broadcast the messages.
-   */
-  function broadcast(uuid: string) {
-    return {
-      send: async (message: Message<Buffer>) => {
-        const randomTime = (Math.random() * 100 + 50) | 0
-        if (opts.delay) {
-          await sleep(randomTime)
-        }
-        await Promise.all(
-          clients.map((c) => c.getUUID() !== uuid && c.processMessage(message))
-        )
-      }
-    }
-  }
-
-  /**
-   * Generate all the clients
-   */
-  const clients = Array.from({ length: opts.clientLength }).map(() => {
-    const uuid = getId()
-    const ws = broadcast(uuid)
-    return crdtProtocol<Buffer>(ws.send, uuid)
-  })
-
-  /**
-   *  Expose fn to compare every client state with each other.
-   */
-  function compare() {
-    expect(compareStatePayloads(clients.map((c) => c.getState()))).toBe(true)
-  }
-
-  return {
-    compare,
-    clients
-  }
-}
+import { compareData, compareStatePayloads, createSandbox } from './utils'
 
 describe('CRDT protocol', () => {
+  it('should return true if there is no state', () => {
+    expect(compareStatePayloads([])).toBe(true)
+  })
   ;[true, false].forEach((delay) => {
     const msg = delay ? '[Delay] ' : ''
     it(`${msg}should store the message A in all the clients`, async () => {
@@ -228,6 +140,25 @@ describe('CRDT protocol', () => {
       await Promise.all([p1, p2, p3])
       compare()
       expect(compareData(clientA.getState()[key].data, Buffer.from('z'))).toBe(
+        true
+      )
+    })
+
+    it(`${msg}A sends message, B has higher timestamp.`, async () => {
+      const { clients, compare } = createSandbox({ clientLength: 3, delay })
+      const [clientA, clientB] = clients
+      const key = 'key-A'
+
+      // Buffer('a') > Buffer('z')
+      const messageB1 = clientB.createEvent(key, Buffer.from('A'))
+      const messageB2 = clientB.createEvent(key, Buffer.from('B'))
+      const messageA = clientA.createEvent(key, Buffer.from('C'))
+      const p2 = clientB.sendMessage(messageB1)
+      const p3 = clientB.sendMessage(messageB2)
+      await Promise.all([p2, p3])
+      await clientA.sendMessage(messageA)
+      compare()
+      expect(compareData(clientA.getState()[key].data, Buffer.from('B'))).toBe(
         true
       )
     })

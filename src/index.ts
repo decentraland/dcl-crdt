@@ -1,4 +1,4 @@
-import { Message, Payload, SendUpdates, State } from './types'
+import { CRDT, Message, Payload, SendUpdates, State } from './types'
 export * from './types'
 
 /**
@@ -19,7 +19,10 @@ function sameData<T = unknown>(a: T, b: T) {
  * to process and store the new data in case its an update, or
  * to discard and send our local value cause remote it's outdated.
  */
-export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
+export function crdtProtocol<T>(
+  sendUpdates: SendUpdates<T>,
+  id: string
+): CRDT<T> {
   /**
    * UUID identifier
    * @internal
@@ -42,7 +45,7 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
     data: T,
     remoteTimestamp: number
   ): Payload<T> {
-    const timestamp = Math.max(remoteTimestamp || 0, state[key]?.timestamp || 0)
+    const timestamp = Math.max(remoteTimestamp, state[key]?.timestamp || 0)
 
     return (state[key] = { timestamp, data })
   }
@@ -74,18 +77,20 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
    * The bigger raw data wins and spreads it to the network
    * @public
    */
-  function processMessage(message: Message<T>) {
+  async function processMessage(message: Message<T>) {
     const { key, data, timestamp } = message
     const current = state[key]
 
     // Somehow the message that we sent came back as an echo.
     if (sameData(current?.data, data)) {
-      return updateState(key, data, timestamp)
+      updateState(key, data, timestamp)
+      return
     }
 
     // If the received timestamp is > than our current value, store it
     if (!current || current.timestamp < timestamp) {
-      return updateState(key, data, timestamp)
+      updateState(key, data, timestamp)
+      return
     }
 
     // If our current timestamp is higher, then send the message
@@ -104,9 +109,15 @@ export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string) {
     function compareData(current: unknown, data: unknown) {
       return (current as number) > (data as number)
     }
-    return compareData(current.data, data)
-      ? sendMessage({ key, data: current.data, timestamp: current.timestamp })
-      : updateState(key, data, timestamp)
+    if (compareData(current.data, data)) {
+      return sendMessage({
+        key,
+        data: current.data,
+        timestamp: current.timestamp
+      })
+    }
+    updateState(key, data, timestamp)
+    return
   }
 
   /**
