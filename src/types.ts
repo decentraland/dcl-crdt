@@ -29,6 +29,10 @@ export type State<T = unknown> = Record<string, Payload<T> | undefined>
  */
 export type SendUpdates<T = unknown> = (message: Message<T>) => Promise<void>
 
+/**
+ * CRDT return type
+ * @public
+ */
 export type CRDT<T = unknown> = {
   createEvent(key: string, data: T): Message<T>
   sendMessage(message: Message<T>): Promise<void>

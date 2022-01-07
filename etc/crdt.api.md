@@ -4,7 +4,7 @@
 
 ```ts
 
-// @public (undocumented)
+// @public
 export type CRDT<T = unknown> = {
     createEvent(key: string, data: T): Message<T>;
     sendMessage(message: Message<T>): Promise<void>;
