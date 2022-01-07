@@ -4,14 +4,17 @@
 
 ```ts
 
-// @public
-export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string): {
-    createEvent: (key: string, data: T) => Message<T>;
-    sendMessage: (message: Message<T>) => Promise<void>;
-    processMessage: (message: Message<T>) => Promise<void> | Payload<T>;
-    getState: () => State<T>;
-    getUUID: () => string;
+// @public (undocumented)
+export type CRDT<T = unknown> = {
+    createEvent(key: string, data: T): Message<T>;
+    sendMessage(message: Message<T>): Promise<void>;
+    processMessage(message: Message<T>): Promise<void>;
+    getState(): State<T>;
+    getUUID(): string;
 };
+
+// @public
+export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string): CRDT<T>;
 
 // @public
 export type Message<T = unknown> = {
