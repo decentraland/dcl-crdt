@@ -8,7 +8,7 @@
 export type CRDT<T = unknown> = {
     createEvent(key: string, data: T): Message<T>;
     sendMessage(message: Message<T>): Promise<void>;
-    processMessage(message: Message<T>): Promise<void>;
+    processMessage(message: Message<T>): Promise<T | void>;
     getState(): State<T>;
     getUUID(): string;
 };
@@ -28,6 +28,11 @@ export type Payload<T = unknown> = {
     timestamp: number;
     data: T;
 };
+
+// Warning: (ae-internal-missing-underscore) The name "sameData" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export function sameData<T = unknown>(a: T, b: T): boolean;
 
 // @public
 export type SendUpdates<T = unknown> = (message: Message<T>) => Promise<void>;
