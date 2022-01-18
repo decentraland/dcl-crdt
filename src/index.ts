@@ -5,10 +5,26 @@ export * from './types'
  * Compare raw data.
  * @internal
  */
-function sameData<T = unknown>(a: T, b: T) {
+export function sameData<T = unknown>(a: T, b: T): boolean {
+  if (a === b) return true
+
   if (a instanceof Buffer && b instanceof Buffer) {
     return a.equals(b)
   }
+
+  if (a instanceof Uint8Array && b instanceof Uint8Array) {
+    if (a.byteLength !== b.byteLength) {
+      return false
+    }
+
+    for (let i = 0; i < a.byteLength; i++) {
+      if (a[i] !== b[i]) {
+        return false
+      }
+    }
+    return true
+  }
+
   return a === b
 }
 
@@ -72,9 +88,12 @@ export function crdtProtocol<T>(
   }
 
   /**
-   * Process the received message only if the lamport number is higher than
-   * the current one. If not, seems we have a race condition.
-   * The bigger raw data wins and spreads it to the network
+   * Process the received message only if the lamport number recieved is higher
+   * than the stored one. If its lower, we spread it to the network to correct the peer.
+   * If they are equal, the bigger raw data wins.
+
+   * Returns the recieved data if the lamport number was bigger than ours.
+   * If it was an outdated message, then we return void
    * @public
    */
   async function processMessage(message: Message<T>) {
@@ -89,8 +108,7 @@ export function crdtProtocol<T>(
 
     // If the received timestamp is > than our current value, store it
     if (!current || current.timestamp < timestamp) {
-      updateState(key, data, timestamp)
-      return
+      return updateState(key, data, timestamp).data
     }
 
     // If our current timestamp is higher, then send the message
@@ -116,8 +134,7 @@ export function crdtProtocol<T>(
         timestamp: current.timestamp
       })
     }
-    updateState(key, data, timestamp)
-    return
+    return updateState(key, data, timestamp).data
   }
 
   /**

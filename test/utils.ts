@@ -1,18 +1,18 @@
-import { crdtProtocol, Message, State } from '../src'
+import { crdtProtocol, Message, sameData, State } from '../src'
 
 /**
  * Compare buffer data
  * @internal
  */
-export function compareData(a: Buffer, b: Buffer) {
-  return a.equals(b)
+export function compareData(a: unknown, b: unknown) {
+  return sameData(a, b)
 }
 
 /**
  * Compare state between clients
  * @internal
  */
-export function compareStatePayloads(states: State<Buffer>[]) {
+export function compareStatePayloads<T = Buffer>(states: State<T>[]) {
   if (!states.length) {
     return true
   }
@@ -23,8 +23,8 @@ export function compareStatePayloads(states: State<Buffer>[]) {
       s.length === baseState.length &&
       keys.every(
         (key) =>
-          compareData(s[key].data, baseState[key].data) &&
-          s[key].timestamp === baseState[key].timestamp
+          s[key].timestamp === baseState[key].timestamp &&
+          compareData(s[key].data, baseState[key].data)
       )
   )
 }
@@ -50,7 +50,7 @@ export function sleep(ms: number) {
  * Generate clients, transport and compare fns so its easier to write tests.
  * @internal
  */
-export function createSandbox(opts: Sandbox) {
+export function createSandbox<T = Buffer>(opts: Sandbox) {
   // Fake uuiid generator
   let id = 0
   const getId = () => {
@@ -64,7 +64,7 @@ export function createSandbox(opts: Sandbox) {
    */
   function broadcast(uuid: string) {
     return {
-      send: async (message: Message<Buffer>) => {
+      send: async (message: Message<T>) => {
         const randomTime = (Math.random() * 100 + 50) | 0
         if (opts.delay) {
           await sleep(randomTime)
@@ -82,7 +82,7 @@ export function createSandbox(opts: Sandbox) {
   const clients = Array.from({ length: opts.clientLength }).map(() => {
     const uuid = getId()
     const ws = broadcast(uuid)
-    return crdtProtocol<Buffer>(ws.send, uuid)
+    return crdtProtocol<T>(ws.send, uuid)
   })
 
   /**
