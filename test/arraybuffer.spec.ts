@@ -2,7 +2,7 @@ import { compareData, createSandbox } from './utils'
 
 function textToUint8Array(value) {
   const stringValue = typeof value === 'string' ? value : JSON.stringify(value)
-  return new Uint8Array(stringValue.split('').map(c => c.charCodeAt(0)))
+  return new Uint8Array(stringValue.split('').map((c) => c.charCodeAt(0)))
 }
 
 describe('CRDT Uint8Array', () => {
