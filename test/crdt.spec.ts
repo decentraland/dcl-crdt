@@ -1,6 +1,7 @@
 import expect from 'expect'
 
-import { compareData, compareStatePayloads, createSandbox } from './utils'
+import { compareData, compareStatePayloads } from './utils'
+import { createSandbox } from './utils/sandbox'
 
 describe('CRDT protocol', () => {
   it('should return true if there is no state', () => {

@@ -1,6 +1,7 @@
 import expect from 'expect'
 
-import { compareData, createSandbox } from './utils'
+import { compareData } from './utils'
+import { createSandbox } from './utils/sandbox'
 
 describe('CRDT process message', () => {
   it('should return the data if its a new message', async () => {
