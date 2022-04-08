@@ -14,7 +14,7 @@ describe('CRDT Uint8Array', () => {
       clientB.sendMessage(messageB),
       clientA.sendMessage(messageA)
     ])
-    compare()
+    await compare()
     expect(compareData(messageA.data, messageA.data)).toBe(true)
   })
 
@@ -30,7 +30,7 @@ describe('CRDT Uint8Array', () => {
       clientB.sendMessage(messageB),
       clientA.sendMessage(messageA)
     ])
-    compare()
+    await compare()
     expect(compareData(clientA.getState()[key].data, encode.encode('b'))).toBe(
       true
     )
@@ -47,7 +47,7 @@ describe('CRDT Uint8Array', () => {
       clientB.sendMessage(messageB),
       clientA.sendMessage(messageA)
     ])
-    compare()
+    await compare()
     expect(compareData(clientA.getState()[key].data, encode.encode('b'))).toBe(
       true
     )

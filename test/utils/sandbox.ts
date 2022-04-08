@@ -1,7 +1,7 @@
 import { crdtProtocol } from '../../src'
 import { Message } from '../../src/types'
 import { compareStatePayloads, sleep } from '.'
-import logTest from './logger'
+import { snapshotTest } from './snapshot'
 
 /**
  * Sandbox type opts
@@ -20,7 +20,7 @@ export function createSandbox<T = Buffer>(opts: Sandbox) {
   /**
    *
    */
-  const testLogger = logTest()
+  const snapshot = snapshotTest()
 
   /**
    * Transport method to broadcast the messages.
@@ -50,7 +50,7 @@ export function createSandbox<T = Buffer>(opts: Sandbox) {
     return {
       ...crdt,
       sendMessage: function (message: Message<T>) {
-        testLogger.addMessage(message)
+        snapshot.addMessage(message)
         return crdt.sendMessage(message)
       }
     }
@@ -60,9 +60,9 @@ export function createSandbox<T = Buffer>(opts: Sandbox) {
    *  Expose fn to compare every client state with each other.
    *  And also, saves the state in the test file.
    */
-  function compare() {
+  async function compare() {
     expect(compareStatePayloads(clients.map((c) => c.getState()))).toBe(true)
-    testLogger.print(clients[0].getState())
+    await snapshot.validateSpec(clients[0].getState())
   }
 
   return {

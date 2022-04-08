@@ -11,5 +11,5 @@ module.exports = {
   coverageDirectory: "coverage",
   verbose: true,
   testMatch: ["**/*.spec.(ts)"],
-  testEnvironment: "node",
+  testEnvironment: "node"
 }

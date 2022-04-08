@@ -21,7 +21,7 @@ async function prepareSandbox() {
   await Promise.all([clientB.sendMessage(m2), clientC.sendMessage(m3)])
   const messages = [...m1, m2, m3]
 
-  compare()
+  await compare()
   expect(clientA.getState()[key].data).toStrictEqual(m3.data)
 
   // A sends to messages, B & C receive them.

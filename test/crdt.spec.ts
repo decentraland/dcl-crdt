@@ -15,7 +15,7 @@ describe('CRDT protocol', () => {
       const key = 'key-A'
       const messageA = clientA.createEvent(key, Buffer.from('casla'))
       await clientA.sendMessage(messageA)
-      compare()
+      await compare()
       expect(clientA.getState()[key].data).toBe(messageA.data)
     })
 
@@ -24,7 +24,7 @@ describe('CRDT protocol', () => {
       const [clientA] = clients
       const messageA = clientA.createEvent('key-A', Buffer.from('casla'))
       await clientA.sendMessage(messageA)
-      compare()
+      await compare()
     })
 
     it(`${msg}should decline message A if both messages are sent at the same time and data B > data A`, async () => {
@@ -38,7 +38,7 @@ describe('CRDT protocol', () => {
       const promiseA = clientA.sendMessage(messageA)
       const promiseB = clientB.sendMessage(messageB)
       await Promise.all([promiseA, promiseB])
-      compare()
+      await compare()
       expect(compareData(clientA.getState()[key].data, messageB.data)).toBe(
         true
       )
@@ -53,7 +53,7 @@ describe('CRDT protocol', () => {
       const promiseA = clientA.sendMessage(messageA)
       const promiseB = clientB.sendMessage(messageB)
       await Promise.all([promiseA, promiseB])
-      compare()
+      await compare()
       expect(compareData(clientA.getState()[key].data, messageB.data)).toBe(
         true
       )
@@ -77,7 +77,7 @@ describe('CRDT protocol', () => {
       const p3 = clientB.sendMessage(messageB2)
       const p4 = clientA.sendMessage(messageA2)
       await Promise.all([p3, p4])
-      compare()
+      await compare()
       expect(clientA.getState()[keyB].data).toBe(messageA2.data)
     })
 
@@ -100,7 +100,7 @@ describe('CRDT protocol', () => {
       const p2 = clientB.sendMessage(messageB2)
 
       await Promise.all([p1, p2])
-      compare()
+      await compare()
       expect(clientA.getState()[keyB].data).toBe(messageB2.data)
     })
 
@@ -122,7 +122,7 @@ describe('CRDT protocol', () => {
       const p1 = clientA.sendMessage(messageA2)
       const p2 = clientB.sendMessage(messageB2)
       await Promise.all([p1, p2])
-      compare()
+      await compare()
       expect(clientA.getState()[keyB].data).toBe(messageB2.data)
     })
 
@@ -139,7 +139,7 @@ describe('CRDT protocol', () => {
       const p2 = clientB.sendMessage(messageB)
       const p3 = clientC.sendMessage(messageC)
       await Promise.all([p1, p2, p3])
-      compare()
+      await compare()
       expect(compareData(clientA.getState()[key].data, Buffer.from('z'))).toBe(
         true
       )
@@ -158,7 +158,7 @@ describe('CRDT protocol', () => {
       const p3 = clientB.sendMessage(messageB2)
       await Promise.all([p2, p3])
       await clientA.sendMessage(messageA)
-      compare()
+      await compare()
       expect(compareData(clientA.getState()[key].data, Buffer.from('B'))).toBe(
         true
       )
