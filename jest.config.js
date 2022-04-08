@@ -9,6 +9,9 @@ module.exports = {
     "^.+\\.(ts|tsx)$": "ts-jest",
   },
   coverageDirectory: "coverage",
+  collectCoverageFrom: [
+    "src/**/*.ts"
+  ],
   verbose: true,
   testMatch: ["**/*.spec.(ts)"],
   testEnvironment: "node"
