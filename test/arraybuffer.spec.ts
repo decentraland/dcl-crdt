@@ -1,23 +1,20 @@
-import { compareData, createSandbox } from './utils'
-
-function textToUint8Array(value) {
-  const stringValue = typeof value === 'string' ? value : JSON.stringify(value)
-  return new Uint8Array(stringValue.split('').map((c) => c.charCodeAt(0)))
-}
+import { compareData } from './utils'
+import { createSandbox } from './utils/sandbox'
 
 describe('CRDT Uint8Array', () => {
+  const encode = new TextEncoder()
   it('should return the same data', async () => {
     const { clients, compare } = createSandbox<Uint8Array>({ clientLength: 2 })
     const [clientA, clientB] = clients
     const key = 'key-A'
 
-    const messageA = clientA.createEvent(key, textToUint8Array('Hola'))
-    const messageB = clientB.createEvent(key, textToUint8Array('Hola'))
+    const messageA = clientA.createEvent(key, encode.encode('Hola'))
+    const messageB = clientB.createEvent(key, encode.encode('Hola'))
     await Promise.all([
       clientB.sendMessage(messageB),
       clientA.sendMessage(messageA)
     ])
-    compare()
+    await compare()
     expect(compareData(messageA.data, messageA.data)).toBe(true)
   })
 
@@ -26,33 +23,33 @@ describe('CRDT Uint8Array', () => {
     const [clientA, clientB] = clients
     const key = 'key-A'
 
-    const messageA = clientA.createEvent(key, textToUint8Array('a'))
-    const messageB = clientB.createEvent(key, textToUint8Array('b'))
+    const messageA = clientA.createEvent(key, encode.encode('a'))
+    const messageB = clientB.createEvent(key, encode.encode('b'))
     // b > a
     await Promise.all([
       clientB.sendMessage(messageB),
       clientA.sendMessage(messageA)
     ])
-    compare()
-    expect(
-      compareData(clientA.getState()[key].data, textToUint8Array('b'))
-    ).toBe(true)
+    await compare()
+    expect(compareData(clientA.getState()[key].data, encode.encode('b'))).toBe(
+      true
+    )
   })
   it('should return the bigger raw data. a.byteLength !== b.byteLength', async () => {
     const { clients, compare } = createSandbox<Uint8Array>({ clientLength: 2 })
     const [clientA, clientB] = clients
     const key = 'key-A'
 
-    const messageA = clientA.createEvent(key, textToUint8Array('aa'))
-    const messageB = clientB.createEvent(key, textToUint8Array('b'))
+    const messageA = clientA.createEvent(key, encode.encode('aa'))
+    const messageB = clientB.createEvent(key, encode.encode('b'))
     // b > a
     await Promise.all([
       clientB.sendMessage(messageB),
       clientA.sendMessage(messageA)
     ])
-    compare()
-    expect(
-      compareData(clientA.getState()[key].data, textToUint8Array('b'))
-    ).toBe(true)
+    await compare()
+    expect(compareData(clientA.getState()[key].data, encode.encode('b'))).toBe(
+      true
+    )
   })
 })

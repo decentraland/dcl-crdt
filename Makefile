@@ -3,11 +3,12 @@ ifneq ($(CI), true)
 LOCAL_ARG = --local --verbose --diagnostics
 endif
 
-test:
-	node_modules/.bin/jest --detectOpenHandles --coverage --colors --runInBand $(TESTARGS)
+update-snapshots:
+	mv test/pre-data/* data/
 
-test-watch:
-	node_modules/.bin/jest --detectOpenHandles --colors --runInBand --watch $(TESTARGS)
+test:
+	rm -rf test/pre-data/*
+	node_modules/.bin/jest --detectOpenHandles --coverage --colors --runInBand $(TESTARGS)
 
 lint:
 	node_modules/.bin/eslint . --ext .ts

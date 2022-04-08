@@ -1,9 +1,10 @@
 import { CRDT } from '../src'
-import { compareStatePayloads, createSandbox, shuffle } from './utils'
+import { compareStatePayloads, shuffle } from './utils'
+import { createSandbox } from './utils/sandbox'
 
 function createMessages(client: CRDT<Buffer>, key: string, length: number = 1) {
   return Array.from({ length }).map((_, index) =>
-    client.createEvent(key, Buffer.from(`Message-${index}-${client.getUUID}`))
+    client.createEvent(key, Buffer.from(`Message-${index}-${client.getUUID()}`))
   )
 }
 
@@ -20,7 +21,7 @@ async function prepareSandbox() {
   await Promise.all([clientB.sendMessage(m2), clientC.sendMessage(m3)])
   const messages = [...m1, m2, m3]
 
-  compare()
+  await compare()
   expect(clientA.getState()[key].data).toStrictEqual(m3.data)
 
   // A sends to messages, B & C receive them.

@@ -127,6 +127,7 @@ export function crdtProtocol<T>(
     function compareData(current: unknown, data: unknown) {
       return (current as number) > (data as number)
     }
+
     if (compareData(current.data, data)) {
       return sendMessage({
         key,
