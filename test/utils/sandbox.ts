@@ -27,16 +27,18 @@ export function createSandbox<T = Buffer>(opts: Sandbox) {
    * @internal
    */
   function broadcast(uuid: string) {
-    return {
-      send: async (message: Message<T>) => {
-        const randomTime = (Math.random() * 100 + 50) | 0
-        if (opts.delay) {
-          await sleep(randomTime)
-        }
-        await Promise.all(
-          clients.map((c) => c.getUUID() !== uuid && c.processMessage(message))
-        )
+    async function send(message: Message<T>) {
+      const randomTime = (Math.random() * 100 + 50) | 0
+      if (opts.delay) {
+        await sleep(randomTime)
       }
+      await Promise.all(
+        clients.map((c) => c.getUUID() !== uuid && c.onMessage(message))
+      )
+    }
+
+    return {
+      send
     }
   }
 
@@ -46,12 +48,21 @@ export function createSandbox<T = Buffer>(opts: Sandbox) {
   const clients = Array.from({ length: opts.clientLength }).map((_, index) => {
     const uuid = `${index}`
     const ws = broadcast(uuid)
-    const crdt = crdtProtocol<T>(ws.send, uuid)
+    const crdt = crdtProtocol<T>(uuid)
+
     return {
       ...crdt,
       sendMessage: function (message: Message<T>) {
         snapshot.addMessage(message)
-        return crdt.sendMessage(message)
+        return ws.send(message)
+      },
+      onMessage: function (message: Message<T>) {
+        const msg = crdt.processMessage(message)
+        // If the returned process message its different,
+        // it means its an outdated message. Broadcast it.
+        if (msg.data !== message.data) {
+          return ws.send(msg)
+        }
       }
     }
   })

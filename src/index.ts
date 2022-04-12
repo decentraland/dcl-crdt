@@ -1,4 +1,4 @@
-import { CRDT, Message, Payload, SendUpdates, State } from './types'
+import { CRDT, Message, Payload, State } from './types'
 export * from './types'
 
 /**
@@ -35,10 +35,7 @@ export function sameData<T = unknown>(a: T, b: T): boolean {
  * to process and store the new data in case its an update, or
  * to discard and send our local value cause remote it's outdated.
  */
-export function crdtProtocol<T>(
-  sendUpdates: SendUpdates<T>,
-  id: string
-): CRDT<T> {
+export function crdtProtocol<T>(id: string): CRDT<T> {
   /**
    * UUID identifier
    * @internal
@@ -80,14 +77,6 @@ export function crdtProtocol<T>(
   }
 
   /**
-   * Send generated message
-   * @public
-   */
-  function sendMessage(message: Message<T>) {
-    return sendUpdates(message)
-  }
-
-  /**
    * Process the received message only if the lamport number recieved is higher
    * than the stored one. If its lower, we spread it to the network to correct the peer.
    * If they are equal, the bigger raw data wins.
@@ -96,46 +85,44 @@ export function crdtProtocol<T>(
    * If it was an outdated message, then we return void
    * @public
    */
-  async function processMessage(message: Message<T>) {
+  function processMessage(message: Message<T>): Message<T> {
     const { key, data, timestamp } = message
     const current = state[key]
 
-    // Somehow the message that we sent came back as an echo.
-    if (sameData(current?.data, data)) {
-      updateState(key, data, timestamp)
-      return
-    }
-
-    // If the received timestamp is > than our current value, store it
+    // The received message is > than our current value, update our state.
     if (!current || current.timestamp < timestamp) {
-      return updateState(key, data, timestamp).data
+      updateState(key, data, timestamp).data
+      return message
     }
 
-    // If our current timestamp is higher, then send the message
-    // to the network with our state
+    // Outdated Message. Resend our state message through the wire.
     if (current.timestamp > timestamp) {
-      return sendMessage({
+      return {
         key,
         data: current.data,
         timestamp: current.timestamp
-      })
+      }
     }
 
-    // if both timestamps are equal, then we have a race condition.
-    // We should compare the raw data and the higher one wins.
-    // We MUST increment the counter.
+    // Same data, same timestamp. Weirdo echo message.
+    if (sameData(current?.data, data)) {
+      return message
+    }
+
+    // Race condition, same timestamp diff data.
     function compareData(current: unknown, data: unknown) {
       return (current as number) > (data as number)
     }
 
     if (compareData(current.data, data)) {
-      return sendMessage({
+      return {
         key,
         data: current.data,
         timestamp: current.timestamp
-      })
+      }
     }
-    return updateState(key, data, timestamp).data
+    updateState(key, data, timestamp).data
+    return message
   }
 
   /**
@@ -156,7 +143,6 @@ export function crdtProtocol<T>(
 
   return {
     createEvent,
-    sendMessage,
     processMessage,
     getState,
     getUUID

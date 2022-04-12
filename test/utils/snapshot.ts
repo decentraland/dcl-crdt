@@ -2,32 +2,32 @@ import { createInterface } from 'readline'
 import fs from 'fs-extra'
 import path from 'path'
 
-import { CRDT, Message } from '../../src/types'
+import { CRDT, Message, State } from '../../src/types'
+
+export function getDataPath(fileName: string) {
+  return path.resolve(process.cwd(), 'data', fileName)
+}
+
+export async function* readByLine(fileName: string) {
+  try {
+    const fileStream = fs.createReadStream(getDataPath(fileName))
+    const interf = createInterface({
+      input: fileStream,
+      crlfDelay: Infinity
+    })
+    for await (const line of interf) {
+      yield line
+    }
+  } catch (e) {
+    throw new Error(`Expect ${fileName} to exists at data/ folder`)
+  }
+}
 
 export function snapshotTest<T = unknown>() {
   const messages: Message<string>[] = []
 
-  async function* readByLine(fileName: string) {
-    try {
-      const fileStream = fs.createReadStream(getDataPath(fileName))
-      const interf = createInterface({
-        input: fileStream,
-        crlfDelay: Infinity
-      })
-      for await (const line of interf) {
-        yield line
-      }
-    } catch (e) {
-      throw new Error(`Expect ${fileName} to exists at data/ folder`)
-    }
-  }
-
   function getTestPath(fileName: string) {
     return path.resolve(process.cwd(), 'test', 'pre-data', fileName)
-  }
-
-  function getDataPath(fileName: string) {
-    return path.resolve(process.cwd(), 'data', fileName)
   }
 
   function getfileNameFromSpec(spec: string) {
@@ -83,10 +83,12 @@ export function snapshotTest<T = unknown>() {
     messages.push({ ...message, data: parseData(message.data) })
   }
 
-  function parseState(state: ReturnType<CRDT<T>['getState']>): string[] {
-    return Object.entries(state).map(([key, { data, timestamp }]) =>
-      JSON.stringify({ key, data: parseData(data), timestamp }, null, 0)
-    )
+  function parseState(state: ReturnType<CRDT<T>['getState']>): string {
+    const newState: State<string> = {}
+    for (const key in state) {
+      newState[key] = { ...state[key], data: parseData(state[key].data) }
+    }
+    return JSON.stringify(newState, null, 0)
   }
 
   async function validateSpec(state: ReturnType<CRDT<T>['getState']>) {
@@ -98,7 +100,7 @@ export function snapshotTest<T = unknown>() {
       ...messages.map((m) => JSON.stringify(m, null, 0)),
       '# End of messages',
       '# Final CRDT State',
-      ...parseState(state),
+      parseState(state),
       '#'
     ]
 

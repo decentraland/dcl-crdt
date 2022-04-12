@@ -8,9 +8,9 @@ describe('CRDT process message', () => {
     const [clientA, clientB] = createSandbox({ clientLength: 2 }).clients
     const key = 'key-A'
     const messageA = clientA.createEvent(key, Buffer.from('casla'))
-    const value = await clientB.processMessage(messageA)
+    const value = clientB.processMessage(messageA)
 
-    expect(compareData(value as Buffer, messageA.data)).toBe(true)
+    expect(compareData(value.data as Buffer, messageA.data)).toBe(true)
   })
 
   it('should return void if its an outdated message', async () => {
@@ -18,13 +18,15 @@ describe('CRDT process message', () => {
     const key = 'key-A'
 
     clientA.createEvent(key, Buffer.from('casla'))
-    clientA.createEvent(key, Buffer.from('casla2'))
+    const { data } = clientA.createEvent(key, Buffer.from('casla2'))
 
     const messageB = clientB.createEvent(key, Buffer.from('boedo'))
     // LamportA: 2, data: casla2
     // LamportB: 1, data: boedo
-    const value = await clientA.processMessage(messageB)
-    expect(value).toBe(undefined)
+    const value = clientA.processMessage(messageB)
+    await clientB.sendMessage(messageB)
+    expect(value.data).toBe(data)
+    expect(clientB.getState()[key].data).toBe(data)
   })
 
   it('should return data if they have the same lamport number but bigger raw value', async () => {
@@ -36,10 +38,9 @@ describe('CRDT process message', () => {
     // LamportA: 1, data: casla2
     // LamportB: 1, data: boedo
     // dataA > dataB
-    const valueB = await clientB.processMessage(messageA)
-    const valueA = await clientA.processMessage(messageB)
-
-    expect(valueA).toBe(undefined)
-    expect(compareData(valueB as Buffer, messageA.data)).toBe(true)
+    const valueB = clientB.processMessage(messageA)
+    const valueA = clientA.processMessage(messageB)
+    expect(valueA.data).toBe(messageA.data)
+    expect(compareData(valueB.data as Buffer, messageA.data)).toBe(true)
   })
 })
