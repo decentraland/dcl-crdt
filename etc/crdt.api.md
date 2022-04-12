@@ -7,14 +7,13 @@
 // @public
 export type CRDT<T = unknown> = {
     createEvent(key: string, data: T): Message<T>;
-    sendMessage(message: Message<T>): Promise<void>;
-    processMessage(message: Message<T>): Promise<T | void>;
+    processMessage(message: Message<T>): Message<T>;
     getState(): State<T>;
     getUUID(): string;
 };
 
 // @public
-export function crdtProtocol<T>(sendUpdates: SendUpdates<T>, id: string): CRDT<T>;
+export function crdtProtocol<T>(id: string): CRDT<T>;
 
 // @public
 export type Message<T = unknown> = {
@@ -33,9 +32,6 @@ export type Payload<T = unknown> = {
 //
 // @internal
 export function sameData<T = unknown>(a: T, b: T): boolean;
-
-// @public
-export type SendUpdates<T = unknown> = (message: Message<T>) => Promise<void>;
 
 // @public
 export type State<T = unknown> = Record<string, Payload<T> | undefined>;

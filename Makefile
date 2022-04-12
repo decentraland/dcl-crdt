@@ -1,3 +1,4 @@
+.DEFAULT_GOAL := build
 
 ifneq ($(CI), true)
 LOCAL_ARG = --local --verbose --diagnostics

@@ -3,14 +3,14 @@
 {"key":"key-A","data":"casla","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"casla","timestamp":1}
+{"key-A":{"timestamp":1,"data":"casla"}}
 #
 # CRDT protocol [Delay] one message with more clients (N > 2)
 # Messages sent over the wire
 {"key":"key-A","data":"casla","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"casla","timestamp":1}
+{"key-A":{"timestamp":1,"data":"casla"}}
 #
 # CRDT protocol [Delay] should decline message A if both messages are sent at the same time and data B > data A
 # Messages sent over the wire
@@ -18,7 +18,7 @@
 {"key":"key-A","data":"z","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"z","timestamp":1}
+{"key-A":{"timestamp":1,"data":"z"}}
 #
 # CRDT protocol [Delay] B > A but with more clients (N > 2)
 # Messages sent over the wire
@@ -26,7 +26,7 @@
 {"key":"key-A","data":"b","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"b","timestamp":1}
+{"key-A":{"timestamp":1,"data":"b"}}
 #
 # CRDT protocol [Delay] should store both keys
 # Messages sent over the wire
@@ -36,8 +36,7 @@
 {"key":"key-B","data":"z","timestamp":2}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"boedo","timestamp":1}
-{"key":"key-B","data":"z","timestamp":2}
+{"key-A":{"timestamp":1,"data":"boedo"},"key-B":{"timestamp":2,"data":"z"}}
 #
 # CRDT protocol [Delay] should store both keys, even if we send the messages in diff order z > a
 # Messages sent over the wire
@@ -47,8 +46,7 @@
 {"key":"key-B","data":"z","timestamp":2}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"boedo","timestamp":1}
-{"key":"key-B","data":"z","timestamp":2}
+{"key-A":{"timestamp":1,"data":"boedo"},"key-B":{"timestamp":2,"data":"z"}}
 #
 # CRDT protocol [Delay] same as before but with more clients (N > 2)
 # Messages sent over the wire
@@ -58,8 +56,7 @@
 {"key":"key-B","data":"z","timestamp":2}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"boedo","timestamp":1}
-{"key":"key-B","data":"z","timestamp":2}
+{"key-A":{"timestamp":1,"data":"boedo"},"key-B":{"timestamp":2,"data":"z"}}
 #
 # CRDT protocol [Delay] A, B and C send at the same time for the same key. Bigger raw should win
 # Messages sent over the wire
@@ -68,7 +65,7 @@
 {"key":"key-A","data":"C","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"z","timestamp":1}
+{"key-A":{"timestamp":1,"data":"z"}}
 #
 # CRDT protocol [Delay] A sends message, B has higher timestamp.
 # Messages sent over the wire
@@ -77,21 +74,21 @@
 {"key":"key-A","data":"C","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"B","timestamp":2}
+{"key-A":{"timestamp":2,"data":"B"}}
 #
 # CRDT protocol should store the message A in all the clients
 # Messages sent over the wire
 {"key":"key-A","data":"casla","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"casla","timestamp":1}
+{"key-A":{"timestamp":1,"data":"casla"}}
 #
 # CRDT protocol one message with more clients (N > 2)
 # Messages sent over the wire
 {"key":"key-A","data":"casla","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"casla","timestamp":1}
+{"key-A":{"timestamp":1,"data":"casla"}}
 #
 # CRDT protocol should decline message A if both messages are sent at the same time and data B > data A
 # Messages sent over the wire
@@ -99,7 +96,7 @@
 {"key":"key-A","data":"z","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"z","timestamp":1}
+{"key-A":{"timestamp":1,"data":"z"}}
 #
 # CRDT protocol B > A but with more clients (N > 2)
 # Messages sent over the wire
@@ -107,7 +104,7 @@
 {"key":"key-A","data":"b","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"b","timestamp":1}
+{"key-A":{"timestamp":1,"data":"b"}}
 #
 # CRDT protocol should store both keys
 # Messages sent over the wire
@@ -117,8 +114,7 @@
 {"key":"key-B","data":"z","timestamp":2}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"boedo","timestamp":1}
-{"key":"key-B","data":"z","timestamp":2}
+{"key-A":{"timestamp":1,"data":"boedo"},"key-B":{"timestamp":2,"data":"z"}}
 #
 # CRDT protocol should store both keys, even if we send the messages in diff order z > a
 # Messages sent over the wire
@@ -128,8 +124,7 @@
 {"key":"key-B","data":"z","timestamp":2}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"boedo","timestamp":1}
-{"key":"key-B","data":"z","timestamp":2}
+{"key-A":{"timestamp":1,"data":"boedo"},"key-B":{"timestamp":2,"data":"z"}}
 #
 # CRDT protocol same as before but with more clients (N > 2)
 # Messages sent over the wire
@@ -139,8 +134,7 @@
 {"key":"key-B","data":"z","timestamp":2}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"boedo","timestamp":1}
-{"key":"key-B","data":"z","timestamp":2}
+{"key-A":{"timestamp":1,"data":"boedo"},"key-B":{"timestamp":2,"data":"z"}}
 #
 # CRDT protocol A, B and C send at the same time for the same key. Bigger raw should win
 # Messages sent over the wire
@@ -149,7 +143,7 @@
 {"key":"key-A","data":"C","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"z","timestamp":1}
+{"key-A":{"timestamp":1,"data":"z"}}
 #
 # CRDT protocol A sends message, B has higher timestamp.
 # Messages sent over the wire
@@ -158,5 +152,5 @@
 {"key":"key-A","data":"C","timestamp":1}
 # End of messages
 # Final CRDT State
-{"key":"key-A","data":"B","timestamp":2}
+{"key-A":{"timestamp":2,"data":"B"}}
 #
