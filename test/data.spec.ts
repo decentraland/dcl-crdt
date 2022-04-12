@@ -1,8 +1,7 @@
 import expect from 'expect'
 import fs from 'fs-extra'
-import { CRDT, Message, State } from '../src/types'
 
-import { compareData, compareStatePayloads } from './utils'
+import { compareStatePayloads } from './utils'
 import { createSandbox } from './utils/sandbox'
 import { getDataPath, readByLine } from './utils/snapshot'
 const messages = []
@@ -46,10 +45,10 @@ describe('CRDT process generated messages', () => {
             const isValid = compareStatePayloads([crdt.getState(), msg])
             expect.setState({ currentTestName: testSpecName })
             if (!isValid) {
-              messages.push(`\x1b[31m✕ \x1b[0m${testSpecName} at [${file}]\n`)
+              messages.push(`\x1b[31m✕ \x1b[0m${testSpecName}  [./${file}]\n`)
               expect(isValid).toBe(true)
             } else {
-              messages.push(`\x1b[32m✓ \x1b[0m${testSpecName}(${file})\n`)
+              messages.push(`\x1b[32m✓ \x1b[0m${testSpecName}  [./${file}]\n`)
             }
             resetCrdt()
           } else {

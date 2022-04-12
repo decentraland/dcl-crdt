@@ -7,17 +7,18 @@ type Transport {
   on(evt: 'message' | 'error'): Promise<void>
 }
 
-const clientA = crdtProtocol<Buffer>(async (message: Message<Buffer>) => {
-  await transportA.send(message)
-}, uuid())
+const clientA = crdtProtocol<Buffer>(uuid())
+const clientB = crdtProtocol<Buffer>(uuid())
 
-const clientB = crdtProtocol<Buffer>(async (message: Message<Buffer>) => {
-  await transportB.send(message)
-}, uuid())
+transportB.on('message', (message) => {
+  const msg = clientB.processMessage(message)
+  if (msg !== message) {
+    transportB.send(msg)
+  } else {
+    // we receive a new update. Update component.
+  }
+})
 
-transportA.on('message', clientA.processMessage)
-transportB.on('message', clientB.processMessage)
-
-const message = clientA.createEvent('keyA', Buffer.from('message'))
-await clientA.sendMessage(message)
+const message = clientA.createEvent('keyA', new TextEncoder().encode('DCL CRDT'))
+await transportA.sendMessage(message)
 ```
