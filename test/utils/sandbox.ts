@@ -16,7 +16,9 @@ type Sandbox = {
  * Generate clients, transport and compare fns so its easier to write tests.
  * @internal
  */
-export function createSandbox<T = Buffer>(opts: Sandbox) {
+export function createSandbox<T extends Buffer | Uint8Array | string = Buffer>(
+  opts: Sandbox
+) {
   /**
    *
    */
@@ -33,7 +35,7 @@ export function createSandbox<T = Buffer>(opts: Sandbox) {
         await sleep(randomTime)
       }
       await Promise.all(
-        clients.map((c) => c.getUUID() !== uuid && c.onMessage(message))
+        clients.map((c) => c.id !== uuid && c.onMessage(message))
       )
     }
 
@@ -48,10 +50,11 @@ export function createSandbox<T = Buffer>(opts: Sandbox) {
   const clients = Array.from({ length: opts.clientLength }).map((_, index) => {
     const uuid = `${index}`
     const ws = broadcast(uuid)
-    const crdt = crdtProtocol<T>(uuid)
+    const crdt = crdtProtocol<T>()
 
     return {
       ...crdt,
+      id: uuid,
       sendMessage: function (message: Message<T>) {
         snapshot.addMessage(message)
         return ws.send(message)

@@ -4,16 +4,17 @@
 
 ```ts
 
+/// <reference types="node" />
+
 // @public
 export type CRDT<T = unknown> = {
     createEvent(key: string, data: T): Message<T>;
     processMessage(message: Message<T>): Message<T>;
     getState(): State<T>;
-    getUUID(): string;
 };
 
 // @public
-export function crdtProtocol<T>(id: string): CRDT<T>;
+export function crdtProtocol<T extends number | Uint8Array | Buffer | string>(): CRDT<T>;
 
 // @public
 export type Message<T = unknown> = {
@@ -31,7 +32,7 @@ export type Payload<T = unknown> = {
 // Warning: (ae-internal-missing-underscore) The name "sameData" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export function sameData<T = unknown>(a: T, b: T): boolean;
+export function sameData<T>(a: T, b: T): boolean;
 
 // @public
 export type State<T = unknown> = Record<string, Payload<T> | undefined>;

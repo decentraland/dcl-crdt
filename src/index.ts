@@ -5,7 +5,7 @@ export * from './types'
  * Compare raw data.
  * @internal
  */
-export function sameData<T = unknown>(a: T, b: T): boolean {
+export function sameData<T>(a: T, b: T): boolean {
   if (a === b) return true
 
   if (a instanceof Buffer && b instanceof Buffer) {
@@ -35,13 +35,9 @@ export function sameData<T = unknown>(a: T, b: T): boolean {
  * to process and store the new data in case its an update, or
  * to discard and send our local value cause remote it's outdated.
  */
-export function crdtProtocol<T>(id: string): CRDT<T> {
-  /**
-   * UUID identifier
-   * @internal
-   */
-  const uuid = id
-
+export function crdtProtocol<
+  T extends number | Uint8Array | Buffer | string
+>(): CRDT<T> {
   /**
    * Local state where we store the latest lamport timestamp
    * and the raw data value
@@ -91,7 +87,7 @@ export function crdtProtocol<T>(id: string): CRDT<T> {
 
     // The received message is > than our current value, update our state.
     if (!current || current.timestamp < timestamp) {
-      updateState(key, data, timestamp).data
+      updateState(key, data, timestamp)
       return message
     }
 
@@ -105,13 +101,13 @@ export function crdtProtocol<T>(id: string): CRDT<T> {
     }
 
     // Same data, same timestamp. Weirdo echo message.
-    if (sameData(current?.data, data)) {
+    if (sameData(current.data, data)) {
       return message
     }
 
     // Race condition, same timestamp diff data.
-    function compareData(current: unknown, data: unknown) {
-      return (current as number) > (data as number)
+    function compareData(current: T, data: T) {
+      return current > data
     }
 
     if (compareData(current.data, data)) {
@@ -133,18 +129,9 @@ export function crdtProtocol<T>(id: string): CRDT<T> {
     return { ...state } as State<T>
   }
 
-  /**
-   * Returns the client uuid
-   * @public
-   */
-  function getUUID(): string {
-    return uuid
-  }
-
   return {
     createEvent,
     processMessage,
-    getState,
-    getUUID
+    getState
   }
 }

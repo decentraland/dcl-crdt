@@ -31,5 +31,4 @@ export type CRDT<T = unknown> = {
   createEvent(key: string, data: T): Message<T>
   processMessage(message: Message<T>): Message<T>
   getState(): State<T>
-  getUUID(): string
 }

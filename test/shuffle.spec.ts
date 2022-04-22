@@ -2,9 +2,13 @@ import { CRDT } from '../src'
 import { compareStatePayloads, shuffle } from './utils'
 import { createSandbox } from './utils/sandbox'
 
-function createMessages(client: CRDT<Buffer>, key: string, length: number = 1) {
+function createMessages(
+  client: CRDT<Buffer> & { id: string },
+  key: string,
+  length: number = 1
+) {
   return Array.from({ length }).map((_, index) =>
-    client.createEvent(key, Buffer.from(`Message-${index}-${client.getUUID()}`))
+    client.createEvent(key, Buffer.from(`Message-${index}-${client.id}`))
   )
 }
 
