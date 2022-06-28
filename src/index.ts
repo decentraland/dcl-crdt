@@ -51,7 +51,7 @@ export function crdtProtocol<
    */
   function updateState(
     key: string,
-    data: T,
+    data: T | null,
     remoteTimestamp: number
   ): Payload<T> {
     const timestamp = Math.max(remoteTimestamp, state[key]?.timestamp || 0)
@@ -64,7 +64,7 @@ export function crdtProtocol<
    * lamport timestmap incremented by one in the state.
    * @public
    */
-  function createEvent(key: string, data: T): Message<T> {
+  function createEvent(key: string, data: T | null): Message<T> {
     // Increment the timestamp
     const timestamp = (state[key]?.timestamp || 0) + 1
     updateState(key, data, timestamp)
@@ -106,8 +106,8 @@ export function crdtProtocol<
     }
 
     // Race condition, same timestamp diff data.
-    function compareData(current: T, data: T) {
-      return current > data
+    function compareData(current: T | null, data: T | null) {
+      return current! > data!
     }
 
     if (compareData(current.data, data)) {
