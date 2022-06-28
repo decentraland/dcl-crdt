@@ -8,7 +8,7 @@
 
 // @public
 export type CRDT<T = unknown> = {
-    createEvent(key: string, data: T): Message<T>;
+    createEvent(key: string, data: T | null): Message<T>;
     processMessage(message: Message<T>): Message<T>;
     getState(): State<T>;
 };
@@ -20,13 +20,13 @@ export function crdtProtocol<T extends number | Uint8Array | Buffer | string>():
 export type Message<T = unknown> = {
     key: string;
     timestamp: number;
-    data: T;
+    data: T | null;
 };
 
 // @public
 export type Payload<T = unknown> = {
     timestamp: number;
-    data: T;
+    data: T | null;
 };
 
 // Warning: (ae-internal-missing-underscore) The name "sameData" should be prefixed with an underscore because the declaration is marked as @internal

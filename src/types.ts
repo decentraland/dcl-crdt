@@ -5,7 +5,7 @@
 export type Message<T = unknown> = {
   key: string
   timestamp: number
-  data: T
+  data: T | null
 }
 
 /**
@@ -14,7 +14,7 @@ export type Message<T = unknown> = {
  */
 export type Payload<T = unknown> = {
   timestamp: number
-  data: T
+  data: T | null
 }
 
 /**
@@ -28,7 +28,7 @@ export type State<T = unknown> = Record<string, Payload<T> | undefined>
  * @public
  */
 export type CRDT<T = unknown> = {
-  createEvent(key: string, data: T): Message<T>
+  createEvent(key: string, data: T | null): Message<T>
   processMessage(message: Message<T>): Message<T>
   getState(): State<T>
 }
