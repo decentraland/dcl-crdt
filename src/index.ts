@@ -6,10 +6,14 @@ export * from './types'
  * @internal
  */
 export function sameData<T>(a: T, b: T): boolean {
+  // At reference level
   if (a === b) return true
 
-  if (a instanceof Buffer && b instanceof Buffer) {
-    return a.equals(b)
+  if (Buffer) {
+    if (a instanceof Buffer && b instanceof Buffer) {
+      // Deep level
+      return a.equals(b)
+    }
   }
 
   if (a instanceof Uint8Array && b instanceof Uint8Array) {
@@ -25,7 +29,7 @@ export function sameData<T>(a: T, b: T): boolean {
     return true
   }
 
-  return a === b
+  return false
 }
 
 /**
