@@ -9,13 +9,6 @@ export function sameData<T>(a: T, b: T): boolean {
   // At reference level
   if (a === b) return true
 
-  if (Buffer) {
-    if (a instanceof Buffer && b instanceof Buffer) {
-      // Deep level
-      return a.equals(b)
-    }
-  }
-
   if (a instanceof Uint8Array && b instanceof Uint8Array) {
     if (a.byteLength !== b.byteLength) {
       return false
@@ -27,6 +20,13 @@ export function sameData<T>(a: T, b: T): boolean {
       }
     }
     return true
+  }
+
+  if ((globalThis as any).Buffer) {
+    if (a instanceof Buffer && b instanceof Buffer) {
+      // Deep level
+      return a.equals(b)
+    }
   }
 
   return false
