@@ -8,9 +8,10 @@
 
 // @public
 export type CRDT<T = unknown> = {
-    createEvent(key: string, data: T | null): Message<T>;
+    createEvent(key1: number, key2: number, data: T | null): Message<T>;
     processMessage(message: Message<T>): Message<T>;
     getState(): State<T>;
+    cloneState(): State<T>;
 };
 
 // @public
@@ -18,7 +19,8 @@ export function crdtProtocol<T extends number | Uint8Array | Buffer | string>():
 
 // @public
 export type Message<T = unknown> = {
-    key: string;
+    key1: number;
+    key2: number;
     timestamp: number;
     data: T | null;
 };
@@ -35,7 +37,12 @@ export type Payload<T = unknown> = {
 export function sameData<T>(a: T, b: T): boolean;
 
 // @public
-export type State<T = unknown> = Record<string, Payload<T> | undefined>;
+export type State<T = unknown> = Map<number, Map<number, Payload<T> | null>>;
+
+// Warning: (ae-internal-missing-underscore) The name "stateIterator" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export function stateIterator<T>(state: State<T>): IterableIterator<[number, number, Payload<T> | null]>;
 
 // (No @packageDocumentation comment for this package)
 
