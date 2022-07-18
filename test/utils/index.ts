@@ -1,4 +1,4 @@
-import { sameData, State } from '../../src'
+import { sameData, State, stateIterator } from '../../src'
 
 /**
  * Compare buffer data
@@ -16,17 +16,34 @@ export function compareStatePayloads<T = Buffer>(states: State<T>[]) {
   if (!states.length) {
     return true
   }
+
   const baseState = states[0]
-  const keys = Object.keys(baseState)
-  return states.every(
-    (s) =>
-      s.length === baseState.length &&
-      keys.every(
-        (key) =>
-          s[key].timestamp === baseState[key].timestamp &&
-          compareData(s[key].data, baseState[key].data)
+  const key1EqualSizes = states.every((s) => s.size === baseState.size)
+  if (!key1EqualSizes) {
+    return false
+  }
+
+  return states.every((currentState) => {
+    for (const [key1, key2, baseStatePayload] of stateIterator(baseState)) {
+      const key2EqualSizes = states.every(
+        (s) => s.get(key1) && s.get(key1).size === baseState.get(key1).size
       )
-  )
+      if (!key2EqualSizes) {
+        return false
+      }
+
+      const currentStatePayload = currentState.get(key1)?.get(key2)
+      const isDifferent =
+        !currentStatePayload ||
+        currentStatePayload.timestamp !== baseStatePayload.timestamp ||
+        !compareData(currentStatePayload.data, baseStatePayload.data)
+
+      if (isDifferent) {
+        return false
+      }
+    }
+    return true
+  })
 }
 
 /**
@@ -46,4 +63,19 @@ export function shuffle<T = unknown>(value: T[]) {
     .map((value) => ({ value, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .map(({ value }) => value)
+}
+
+export function parseStateString<T>(stateStr: string) {
+  const state = JSON.parse(stateStr)
+  const newState: State<T> = new Map()
+  for (const [key, value] of Object.entries(state)) {
+    const keys = key.split('.')
+    const [key1, key2] = [parseInt(keys[0]), parseInt(keys[1])]
+    if (!newState.has(key1)) {
+      newState.set(key1, new Map())
+    }
+
+    newState.get(key1)!.set(key2, value !== null ? { ...(value as any) } : null)
+  }
+  return newState
 }

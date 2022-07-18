@@ -2,7 +2,8 @@ import { createInterface } from 'readline'
 import fs from 'fs-extra'
 import path from 'path'
 
-import { CRDT, Message, State } from '../../src/types'
+import { CRDT, Message, Payload, State } from '../../src/types'
+import { stateIterator } from '../../src'
 
 export function getDataPath(fileName: string) {
   return path.resolve(process.cwd(), 'data', fileName)
@@ -72,7 +73,7 @@ export function snapshotTest<T = unknown>() {
       )
     }
   }
-  function parseData(data: T) {
+  function dataToString<T>(data: T) {
     if (data instanceof Uint8Array || data instanceof Buffer) {
       return new TextDecoder().decode(data)
     }
@@ -80,18 +81,21 @@ export function snapshotTest<T = unknown>() {
   }
 
   function addMessage(message: Message<T>) {
-    messages.push({ ...message, data: parseData(message.data) })
+    messages.push({ ...message, data: dataToString(message.data) })
   }
 
-  function parseState(state: ReturnType<CRDT<T>['getState']>): string {
-    const newState: State<string> = {}
-    for (const key in state) {
-      newState[key] = { ...state[key], data: parseData(state[key].data) }
+  function stateToString<T>(state: State<T>): string {
+    const objState = {}
+    for (const [key1, key2, value] of stateIterator(state)) {
+      objState[`${key1}.${key2}`] = {
+        timestamp: value.timestamp,
+        data: dataToString(value.data)
+      }
     }
-    return JSON.stringify(newState, null, 0)
+    return JSON.stringify(objState, null, 0)
   }
 
-  async function validateSpec(state: ReturnType<CRDT<T>['getState']>) {
+  async function validateSpec(state: State<T>) {
     const { currentTestName: testName, testPath } = expect.getState()
     const fileName = getfileNameFromSpec(testPath)
     const messagesToPrint = [
@@ -100,7 +104,7 @@ export function snapshotTest<T = unknown>() {
       ...messages.map((m) => JSON.stringify(m, null, 0)),
       '# End of messages',
       '# Final CRDT State',
-      parseState(state),
+      stateToString(state),
       '#'
     ]
 

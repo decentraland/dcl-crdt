@@ -4,29 +4,31 @@ import { createSandbox } from './utils/sandbox'
 
 function createMessages(
   client: CRDT<Buffer> & { id: string },
-  key: string,
+  key1: number,
+  key2: number,
   length: number = 1
 ) {
   return Array.from({ length }).map((_, index) =>
-    client.createEvent(key, Buffer.from(`Message-${index}-${client.id}`))
+    client.createEvent(key1, key2, Buffer.from(`Message-${index}-${client.id}`))
   )
 }
 
 async function prepareSandbox() {
   const { clients, compare } = createSandbox({ clientLength: 3 })
   const [clientA, clientB, clientC] = clients
-  const key = 'key-A'
-  const m1 = createMessages(clientA, key, 2)
+  const key1 = 7,
+    key2 = 11
+  const m1 = createMessages(clientA, key1, key2, 2)
   await Promise.all(m1.map((m) => clientA.sendMessage(m)))
 
-  const m2 = createMessages(clientB, key, 1)[0] // data: Message-1-2
-  const m3 = createMessages(clientC, key, 1)[0] // data: Message-1-3
+  const m2 = createMessages(clientB, key1, key2, 1)[0] // data: Message-1-2
+  const m3 = createMessages(clientC, key1, key2, 1)[0] // data: Message-1-3
   // m3 > m2. m3 wins.
   await Promise.all([clientB.sendMessage(m2), clientC.sendMessage(m3)])
   const messages = [...m1, m2, m3]
 
   await compare()
-  expect(clientA.getState()[key].data).toStrictEqual(m3.data)
+  expect(clientA.getState().get(key1).get(key2).data).toStrictEqual(m3.data)
 
   // A sends to messages, B & C receive them.
   // B & C creates a new message at the same time. C > B so message C wins.

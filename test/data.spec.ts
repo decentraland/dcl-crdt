@@ -1,7 +1,7 @@
 import expect from 'expect'
 import fs from 'fs-extra'
 
-import { compareStatePayloads } from './utils'
+import { compareStatePayloads, parseStateString } from './utils'
 import { createSandbox } from './utils/sandbox'
 import { getDataPath, readByLine } from './utils/snapshot'
 const messages = []
@@ -40,8 +40,8 @@ describe('CRDT process generated messages', () => {
         }
 
         if (line.startsWith('{') && line.endsWith('}')) {
-          const msg = JSON.parse(line)
           if (nextLineIsState) {
+            const msg = parseStateString(line)
             const isValid = compareStatePayloads([crdt.getState(), msg])
             expect.setState({ currentTestName: testSpecName })
             if (!isValid) {
@@ -52,6 +52,7 @@ describe('CRDT process generated messages', () => {
             }
             resetCrdt()
           } else {
+            const msg = JSON.parse(line)
             crdt.processMessage(msg)
           }
           continue
