@@ -11,7 +11,6 @@ export type CRDT<T = unknown> = {
     createEvent(key1: number, key2: number, data: T | null): Message<T>;
     processMessage(message: Message<T>): Message<T>;
     getState(): State<T>;
-    cloneState(): State<T>;
 };
 
 // @public
