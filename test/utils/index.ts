@@ -18,21 +18,23 @@ export function compareStatePayloads<T = Buffer>(states: State<T>[]) {
   }
 
   const baseState = states[0]
-  const key1EqualSizes = states.every((s) => s.size === baseState.size)
-  if (!key1EqualSizes) {
-    return false
-  }
 
-  return states.every((currentState) => {
-    for (const [key1, key2, baseStatePayload] of stateIterator(baseState)) {
-      const key2EqualSizes = states.every(
-        (s) => s.get(key1) && s.get(key1).size === baseState.get(key1).size
-      )
-      if (!key2EqualSizes) {
+  for (const state of states) {
+    // Compare key1 keys map size
+    if (state.size !== baseState.size) {
+      return false
+    }
+
+    // Compare inside key1 the key2 keys map size
+    for (const key1 of baseState.keys()) {
+      if (state.get(key1)?.size !== baseState.get(key1)!.size) {
         return false
       }
+    }
 
-      const currentStatePayload = currentState.get(key1)?.get(key2)
+    // Compare each <key1, key2> exists and the { timestamp, data } is the same
+    for (const [key1, key2, baseStatePayload] of stateIterator(baseState)) {
+      const currentStatePayload = state.get(key1)?.get(key2)
       const isDifferent =
         !currentStatePayload ||
         currentStatePayload.timestamp !== baseStatePayload.timestamp ||
@@ -42,8 +44,9 @@ export function compareStatePayloads<T = Buffer>(states: State<T>[]) {
         return false
       }
     }
-    return true
-  })
+  }
+
+  return true
 }
 
 /**
