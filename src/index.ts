@@ -160,25 +160,9 @@ export function crdtProtocol<
     return state
   }
 
-  /**
-   * Returns the current state
-   * @public
-   */
-  function cloneState(): State<T> {
-    const newState: State<T> = new Map()
-    for (const [key1, key2, value] of stateIterator(state)) {
-      if (!newState.has(key1)) {
-        newState.set(key1, new Map())
-      }
-      newState.get(key1)!.set(key2, value !== null ? { ...value } : null)
-    }
-    return state
-  }
-
   return {
     createEvent,
     processMessage,
-    getState,
-    cloneState
+    getState
   }
 }

@@ -64,18 +64,3 @@ export function shuffle<T = unknown>(value: T[]) {
     .sort((a, b) => a.sort - b.sort)
     .map(({ value }) => value)
 }
-
-export function parseStateString<T>(stateStr: string) {
-  const state = JSON.parse(stateStr)
-  const newState: State<T> = new Map()
-  for (const [key, value] of Object.entries(state)) {
-    const keys = key.split('.')
-    const [key1, key2] = [parseInt(keys[0]), parseInt(keys[1])]
-    if (!newState.has(key1)) {
-      newState.set(key1, new Map())
-    }
-
-    newState.get(key1)!.set(key2, value !== null ? { ...(value as any) } : null)
-  }
-  return newState
-}

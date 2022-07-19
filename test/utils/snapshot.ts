@@ -2,8 +2,8 @@ import { createInterface } from 'readline'
 import fs from 'fs-extra'
 import path from 'path'
 
-import { CRDT, Message, Payload, State } from '../../src/types'
-import { stateIterator } from '../../src'
+import { Message, State } from '../../src/types'
+import { dataToString, stateToString } from './state'
 
 export function getDataPath(fileName: string) {
   return path.resolve(process.cwd(), 'data', fileName)
@@ -73,26 +73,9 @@ export function snapshotTest<T = unknown>() {
       )
     }
   }
-  function dataToString<T>(data: T) {
-    if (data instanceof Uint8Array || data instanceof Buffer) {
-      return new TextDecoder().decode(data)
-    }
-    return data.toString()
-  }
 
   function addMessage(message: Message<T>) {
     messages.push({ ...message, data: dataToString(message.data) })
-  }
-
-  function stateToString<T>(state: State<T>): string {
-    const objState = {}
-    for (const [key1, key2, value] of stateIterator(state)) {
-      objState[`${key1}.${key2}`] = {
-        timestamp: value.timestamp,
-        data: dataToString(value.data)
-      }
-    }
-    return JSON.stringify(objState, null, 0)
   }
 
   async function validateSpec(state: State<T>) {

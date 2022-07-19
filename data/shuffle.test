@@ -6,7 +6,7 @@
 {"key1":7,"key2":11,"data":"Message-0-2","timestamp":3}
 # End of messages
 # Final CRDT State
-{"7.11":{"timestamp":3,"data":"Message-0-2"}}
+[{"key1":7,"key2":11,"timestamp":3,"data":"Message-0-2"}]
 #
 # Process messages and get the same result should process all the messages and get the same state even if we sent them in a diff order
 # Messages sent over the wire
@@ -16,5 +16,5 @@
 {"key1":7,"key2":11,"data":"Message-0-2","timestamp":3}
 # End of messages
 # Final CRDT State
-{"7.11":{"timestamp":3,"data":"Message-0-2"}}
+[{"key1":7,"key2":11,"timestamp":3,"data":"Message-0-2"}]
 #
