@@ -10,7 +10,6 @@ export function dataToString<T>(data: T) {
 
 export function stateFromString<T>(stateStr: string) {
   const state = JSON.parse(stateStr)
-  console.log({ state })
   const newState: State<T> = new Map()
   for (const value of state) {
     const { key1, key2, timestamp, data } = value
