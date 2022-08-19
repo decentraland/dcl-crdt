@@ -3,7 +3,8 @@
  * @public
  */
 export type Message<T = unknown> = {
-  key: string
+  key1: number
+  key2: number
   timestamp: number
   data: T | null
 }
@@ -21,14 +22,14 @@ export type Payload<T = unknown> = {
  * Local state
  * @public
  */
-export type State<T = unknown> = Record<string, Payload<T> | undefined>
+export type State<T = unknown> = Map<number, Map<number, Payload<T> | null>>
 
 /**
  * CRDT return type
  * @public
  */
 export type CRDT<T = unknown> = {
-  createEvent(key: string, data: T | null): Message<T>
+  createEvent(key1: number, key2: number, data: T | null): Message<T>
   processMessage(message: Message<T>): Message<T>
   getState(): State<T>
 }

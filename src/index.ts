@@ -33,6 +33,20 @@ export function sameData<T>(a: T, b: T): boolean {
 }
 
 /**
+ * State iterator
+ * @internal
+ */
+export function* stateIterator<T>(
+  state: State<T>
+): IterableIterator<[number, number, Payload<T> | null]> {
+  for (const [key1, value1] of state.entries()) {
+    for (const [key2, value2] of value1.entries()) {
+      yield [key1, key2, value2]
+    }
+  }
+}
+
+/**
  * @public
  * CRDT protocol.
  * Stores the latest state, and decides whenever we have
@@ -47,20 +61,31 @@ export function crdtProtocol<
    * and the raw data value
    * @internal
    */
-  const state: State<T> = {}
+  const state: State<T> = new Map()
 
   /**
    * We should call this fn in order to update the state
    * @internal
    */
   function updateState(
-    key: string,
+    key1: number,
+    key2: number,
     data: T | null,
     remoteTimestamp: number
   ): Payload<T> {
-    const timestamp = Math.max(remoteTimestamp, state[key]?.timestamp || 0)
-
-    return (state[key] = { timestamp, data })
+    const key1Value = state.get(key1)
+    const timestamp = Math.max(
+      remoteTimestamp,
+      key1Value?.get(key2)?.timestamp || 0
+    )
+    if (key1Value) {
+      key1Value.set(key2, { timestamp, data })
+    } else {
+      const newKey1Value = new Map()
+      newKey1Value.set(key2, { timestamp, data })
+      state.set(key1, newKey1Value)
+    }
+    return { timestamp, data }
   }
 
   /**
@@ -68,12 +93,12 @@ export function crdtProtocol<
    * lamport timestmap incremented by one in the state.
    * @public
    */
-  function createEvent(key: string, data: T | null): Message<T> {
+  function createEvent(key1: number, key2: number, data: T | null): Message<T> {
     // Increment the timestamp
-    const timestamp = (state[key]?.timestamp || 0) + 1
-    updateState(key, data, timestamp)
+    const timestamp = (state.get(key1)?.get(key2)?.timestamp || 0) + 1
+    updateState(key1, key2, data, timestamp)
 
-    return { key, data, timestamp }
+    return { key1, key2, data, timestamp }
   }
 
   /**
@@ -86,19 +111,20 @@ export function crdtProtocol<
    * @public
    */
   function processMessage(message: Message<T>): Message<T> {
-    const { key, data, timestamp } = message
-    const current = state[key]
+    const { key1, key2, data, timestamp } = message
+    const current = state.get(key1)?.get(key2)
 
     // The received message is > than our current value, update our state.
     if (!current || current.timestamp < timestamp) {
-      updateState(key, data, timestamp)
+      updateState(key1, key2, data, timestamp)
       return message
     }
 
     // Outdated Message. Resend our state message through the wire.
     if (current.timestamp > timestamp) {
       return {
-        key,
+        key1,
+        key2,
         data: current.data,
         timestamp: current.timestamp
       }
@@ -116,12 +142,13 @@ export function crdtProtocol<
 
     if (compareData(current.data, data)) {
       return {
-        key,
+        key1,
+        key2,
         data: current.data,
         timestamp: current.timestamp
       }
     }
-    updateState(key, data, timestamp).data
+    updateState(key1, key2, data, timestamp).data
     return message
   }
 
@@ -130,7 +157,7 @@ export function crdtProtocol<
    * @public
    */
   function getState(): State<T> {
-    return { ...state } as State<T>
+    return state
   }
 
   return {

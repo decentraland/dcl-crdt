@@ -8,7 +8,7 @@ update-snapshots:
 	mv test/pre-data/* data/
 
 test:
-	rm -rf test/pre-data/*
+	rm -rf test/pre-data
 	mkdir test/pre-data
 	node_modules/.bin/jest --detectOpenHandles --coverage --colors --runInBand $(TESTARGS)
 

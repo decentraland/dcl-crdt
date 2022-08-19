@@ -1,4 +1,4 @@
-import { sameData, State } from '../../src'
+import { sameData, State, stateIterator } from '../../src'
 
 /**
  * Compare buffer data
@@ -16,17 +16,37 @@ export function compareStatePayloads<T = Buffer>(states: State<T>[]) {
   if (!states.length) {
     return true
   }
+
   const baseState = states[0]
-  const keys = Object.keys(baseState)
-  return states.every(
-    (s) =>
-      s.length === baseState.length &&
-      keys.every(
-        (key) =>
-          s[key].timestamp === baseState[key].timestamp &&
-          compareData(s[key].data, baseState[key].data)
-      )
-  )
+
+  for (const state of states) {
+    // Compare key1 keys map size
+    if (state.size !== baseState.size) {
+      return false
+    }
+
+    // Compare inside key1 the key2 keys map size
+    for (const key1 of baseState.keys()) {
+      if (state.get(key1)?.size !== baseState.get(key1)!.size) {
+        return false
+      }
+    }
+
+    // Compare each <key1, key2> exists and the { timestamp, data } is the same
+    for (const [key1, key2, baseStatePayload] of stateIterator(baseState)) {
+      const currentStatePayload = state.get(key1)?.get(key2)
+      const isDifferent =
+        !currentStatePayload ||
+        currentStatePayload.timestamp !== baseStatePayload.timestamp ||
+        !compareData(currentStatePayload.data, baseStatePayload.data)
+
+      if (isDifferent) {
+        return false
+      }
+    }
+  }
+
+  return true
 }
 
 /**

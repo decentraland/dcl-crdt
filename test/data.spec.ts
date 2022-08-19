@@ -4,6 +4,7 @@ import fs from 'fs-extra'
 import { compareStatePayloads } from './utils'
 import { createSandbox } from './utils/sandbox'
 import { getDataPath, readByLine } from './utils/snapshot'
+import { stateFromString } from './utils/state'
 const messages = []
 afterAll(() => {
   // HACK to log all the messages after the describe/it logs for this test.
@@ -39,22 +40,22 @@ describe('CRDT process generated messages', () => {
           continue
         }
 
-        if (line.startsWith('{') && line.endsWith('}')) {
-          const msg = JSON.parse(line)
-          if (nextLineIsState) {
-            const isValid = compareStatePayloads([crdt.getState(), msg])
-            expect.setState({ currentTestName: testSpecName })
-            if (!isValid) {
-              messages.push(`\x1b[31m✕ \x1b[0m${testSpecName}  [./${file}]\n`)
-              expect(isValid).toBe(true)
-            } else {
-              messages.push(`\x1b[32m✓ \x1b[0m${testSpecName}  [./${file}]\n`)
-            }
-            resetCrdt()
+        if (nextLineIsState && line.startsWith('[') && line.endsWith(']')) {
+          const msg = stateFromString(line)
+          const isValid = compareStatePayloads([crdt.getState(), msg])
+          expect.setState({ currentTestName: testSpecName })
+          if (!isValid) {
+            messages.push(`\x1b[31m✕ \x1b[0m${testSpecName}  [./${file}]\n`)
+            expect(isValid).toBe(true)
           } else {
-            crdt.processMessage(msg)
+            messages.push(`\x1b[32m✓ \x1b[0m${testSpecName}  [./${file}]\n`)
           }
-          continue
+          resetCrdt()
+        }
+
+        if (!nextLineIsState && line.startsWith('{') && line.endsWith('}')) {
+          const msg = JSON.parse(line)
+          crdt.processMessage(msg)
         }
       }
     }
