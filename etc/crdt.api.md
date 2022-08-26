@@ -4,8 +4,6 @@
 
 ```ts
 
-/// <reference types="node" />
-
 // @public
 export type CRDT<T = unknown> = {
     createEvent(key1: number, key2: number, data: T | null): Message<T>;
@@ -14,7 +12,7 @@ export type CRDT<T = unknown> = {
 };
 
 // @public
-export function crdtProtocol<T extends number | Uint8Array | Buffer | string>(): CRDT<T>;
+export function crdtProtocol<T extends number | Uint8Array | string>(): CRDT<T>;
 
 // @public
 export type Message<T = unknown> = {
