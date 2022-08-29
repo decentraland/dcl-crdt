@@ -1,6 +1,8 @@
 import { CRDT, Message, Payload, State } from './types'
 export * from './types'
 
+const globalBuffer = (globalThis as any).Buffer
+
 /**
  * Compare raw data.
  * @internal
@@ -22,10 +24,10 @@ export function sameData<T>(a: T, b: T): boolean {
     return true
   }
 
-  if ((globalThis as any).Buffer) {
-    if (a instanceof Buffer && b instanceof Buffer) {
+  if (globalBuffer) {
+    if (a instanceof globalBuffer && b instanceof globalBuffer) {
       // Deep level
-      return a.equals(b)
+      return (a as any).equals(b)
     }
   }
 
@@ -54,7 +56,7 @@ export function* stateIterator<T>(
  * to discard and send our local value cause remote it's outdated.
  */
 export function crdtProtocol<
-  T extends number | Uint8Array | Buffer | string
+  T extends number | Uint8Array | string
 >(): CRDT<T> {
   /**
    * Local state where we store the latest lamport timestamp
