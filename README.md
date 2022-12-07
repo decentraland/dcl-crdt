@@ -1,3 +1,7 @@
+## Migrated to https://github.com/decentraland/js-sdk-toolchain
+
+---
+
 ## CRDT Protocol
 
 Example
